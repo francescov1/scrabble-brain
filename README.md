@@ -8,4 +8,7 @@ This project is built up of the 4 modules listed below:
 
 ## Brain
 
-### TODO: add description and docs for this module
+### Get started
+
+* create a virtual env for this project
+* run `pip install -r requirements.txt`
