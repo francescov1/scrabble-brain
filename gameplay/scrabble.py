@@ -1,4 +1,5 @@
 from random import shuffle
+from word_rank import word_rank
 
 """
 Scrabble Game
@@ -392,6 +393,13 @@ def turn(player, board, bag):
         print("\nRound " + str(round_number) + ": " + player.get_name() + "'s turn \n")
         print(board.get_board())
         print("\n" + player.get_name() + "'s Letter Rack: " + player.get_rack_str())
+
+        #Code added to let BESSIE pick a word to play 
+        word_rank(player.get_rack_str(), board.board_array())
+
+
+
+
 
         #Gets information in order to play a word.
         word_to_play = input("Word to play: ")
