@@ -12,4 +12,11 @@ This project is built up of the 4 modules listed below:
 
 * create a virtual env for this project (must use Python3)
 * run `pip install -r requirements.txt`
-* run `python main.py`
+
+### Run gameplay
+
+If you would like to run the gameplay at the command-line level (to test), run `python run.py`
+
+### Run server
+
+To run the server, which will allow this module to interact with other modules in the project, run `python server.py`
