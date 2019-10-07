@@ -122,17 +122,18 @@ class Rack:
     def __init__(self, bag):
         #Initializes the player's rack/hand. Takes the bag from which the racks tiles will come as an argument.
         self.rack = []
-        self.bag = bag
-        self.initialize()
+        #self.bag = bag
+        #self.initialize()
+        self.initialize(bag)
 
-    def add_to_rack(self):
+    def add_to_rack(self, bag):
         #Takes a tile from the bag and adds it to the player's rack.
-        self.rack.append(self.bag.take_from_bag())
+        self.rack.append(bag.take_from_bag())
 
-    def initialize(self):
+    def initialize(self, bag):
         #Adds the initial 7 tiles to the player's hand.
         for i in range(7):
-            self.add_to_rack()
+            self.add_to_rack(bag)
 
     def get_rack_str(self):
         #Displays the user's rack in string form.
@@ -150,10 +151,10 @@ class Rack:
         #Returns the number of tiles left in the rack.
         return len(self.rack)
 
-    def replenish_rack(self):
+    def replenish_rack(self, bag):
         #Adds tiles to the rack after a turn such that the rack will have 7 tiles (assuming a proper number of tiles in the bag).
-        while self.get_rack_length() < 7 and self.bag.get_remaining_tiles() > 0:
-            self.add_to_rack()
+        while self.get_rack_length() < 7 and bag.get_remaining_tiles() > 0:
+            self.add_to_rack(bag)
 
 class Player:
     """
@@ -230,7 +231,7 @@ class Board:
         for coordinate in DOUBLE_LETTER_SCORE:
             self.board[coordinate[0]][coordinate[1]] = "DLS"
 
-    def place_word(self, word, location, direction, player):
+    def place_word(self, word, location, direction, player, bag):
         #Allows you to play words, assuming that they have already been confirmed as valid.
         global premium_spots
         premium_spots = []
@@ -238,14 +239,14 @@ class Board:
         word = word.upper()
 
         #Places the word going rightwards
-        if direction.lower() == "right":
+        if direction.lower() == "r":
             for i in range(len(word)):
                 if self.board[location[0]][location[1]+i] != "   ":
                     premium_spots.append((word[i], self.board[location[0]][location[1]+i]))
                 self.board[location[0]][location[1]+i] = " " + word[i] + " "
 
         #Places the word going downwards
-        elif direction.lower() == "down":
+        elif direction.lower() == "d":
             for i in range(len(word)):
                 if self.board[location[0]][location[1]+i] != "   ":
                     premium_spots.append((word[i], self.board[location[0]][location[1]+i]))
@@ -256,7 +257,7 @@ class Board:
             for tile in player.get_rack_arr():
                 if tile.get_letter() == letter:
                     player.rack.remove_from_rack(tile)
-        player.rack.replenish_rack()
+        player.rack.replenish_rack(bag)
 
     def board_array(self):
         #Returns the 2-dimensional board array.
@@ -270,10 +271,10 @@ class Word:
         self.direction = direction.lower()
         self.board = board
 
-    def check_word(self):
+    def check_word(self, round_number, players):
         #Checks the word to make sure that it is in the dictionary, and that the location falls within bounds.
         #Also controls the overlapping of words.
-        global round_number, players
+
         word_score = 0
         dictionary = open("dic.txt").read()
 
@@ -291,13 +292,13 @@ class Word:
                 self.word = self.word[:word.index("#")] + blank_tile_val.upper() + self.word[(word.index("#")+1):]
 
             #Reads in the board's current values under where the word that is being played will go. Raises an error if the direction is not valid.
-            if self.direction == "right":
+            if self.direction == "r":
                 for i in range(len(self.word)):
                     if self.board[self.location[0]][self.location[1]+i][1] == " " or self.board[self.location[0]][self.location[1]+i] == "TLS" or self.board[self.location[0]][self.location[1]+i] == "TWS" or self.board[self.location[0]][self.location[1]+i] == "DLS" or self.board[self.location[0]][self.location[1]+i] == "DWS" or self.board[self.location[0]][self.location[1]+i][1] == "*":
                         current_board_ltr += " "
                     else:
                         current_board_ltr += self.board[self.location[0]][self.location[1]+i][1]
-            elif self.direction == "down":
+            elif self.direction == "d":
                 for i in range(len(self.word)):
                     if self.board[self.location[0]+i][self.location[1]] == "   " or self.board[self.location[0]+i][self.location[1]] == "TLS" or self.board[self.location[0]+i][self.location[1]] == "TWS" or self.board[self.location[0]+i][self.location[1]] == "DLS" or self.board[self.location[0]+i][self.location[1]] == "DWS" or self.board[self.location[0]+i][self.location[1]] == " * ":
                         current_board_ltr += " "
@@ -333,7 +334,7 @@ class Word:
                     return "You do not have the tiles for this word\n"
 
             #Raises an error if the location of the word will be out of bounds.
-            if self.location[0] > 14 or self.location[1] > 14 or self.location[0] < 0 or self.location[1] < 0 or (self.direction == "down" and (self.location[0]+len(self.word)-1) > 14) or (self.direction == "right" and (self.location[1]+len(self.word)-1) > 14):
+            if self.location[0] > 14 or self.location[1] > 14 or self.location[0] < 0 or self.location[1] < 0 or (self.direction == "d" and (self.location[0]+len(self.word)-1) > 14) or (self.direction == "r" and (self.location[1]+len(self.word)-1) > 14):
                 return "Location out of bounds.\n"
 
             #Ensures that first turn of the game will have the word placed at (7,7).
@@ -380,109 +381,93 @@ class Word:
     def get_word(self):
         return self.word
 
-def turn(player, board, bag):
-    #Begins a turn, by displaying the current board, getting the information to play a turn, and creates a recursive loop to allow the next person to play.
-    global round_number, players, skipped_turns
+class Game:
+    """
+    Creates an instance of a game. Initializes the board and players
+    """
+    def __init__(self, player_name):
+        self.board = Board()
+        self.bag = Bag()
+        self.round_number = 1
+        self.skipped_turns = 0
 
-    #If the number of skipped turns is less than 6 and a row, and there are either tiles in the bag, or no players have run out of tiles, play the turn.
-    #Otherwise, end the game.
-    if (skipped_turns < 6) or (player.rack.get_rack_length() == 0 and bag.get_remaining_tiles() == 0):
+        players = [Player(self.bag), Player(self.bag)]
+        players[0].set_name(player_name)
+        players[1].set_name("Bot")
+        self.players = players
+        self.current_player = 0
 
-        #Displays whose turn it is, the current board, and the player's rack.
-        print("\nRound " + str(round_number) + ": " + player.get_name() + "'s turn \n")
-        print(board.get_board())
-        print("\n" + player.get_name() + "'s Letter Rack: " + player.get_rack_str())
+    def print_game(self):
+        players = self.players
+        print("\nRound " + str(self.round_number) + ": " + players[self.current_player].get_name() + "'s turn \n")
+        print(self.board.get_board())
 
-        #Gets information in order to play a word.
-        word_to_play = input("Word to play: ")
+        print("\nLetter Racks")
+        for player in players:
+            print(player.get_name() + ": " + player.get_rack_str())
+
+        print("\nScores")
+        for player in players:
+            print(player.get_name() + ": " + str(player.get_score()))
+
+        print("")
+
+    # TODO
+    def bot_turn(self):
+        print('bot turn')
+
+    def is_ended(self):
+        player = self.players[self.current_player]
+
+        # TODO: logic for the second condition seems wrong
+        #If the number of skipped turns is less than 6 and a row, and there are either tiles in the bag, or no players have run out of tiles, play the turn.
+        #Otherwise, end the game.
+        if (self.skipped_turns < 6) or (player.rack.get_rack_length() == 0 and self.bag.get_remaining_tiles() == 0):
+            return False
+        #If the number of skipped turns is over 6 or the bag has both run out of tiles and a player is out of tiles, end the game.
+        else:
+            return True
+
+    # word [type string], col/row [type num], direction [r or d]
+    def player_turn(self, word_to_play, col, row, direction):
+        player = self.players[self.current_player]
         location = []
-        col = input("Column number: ")
-        row = input("Row number: ")
-        if (col == "" or row == "") or (col not in [str(x) for x in range(15)] or row not in [str(x) for x in range(15)]):
+
+        if (col > 14 or col < 0) or (row > 14 or row < 0):
             location = [-1, -1]
         else:
-            location = [int(row), int(col)]
-        direction = input("Direction of word (right or down): ")
+            location = [row, col]
 
-        word = Word(word_to_play, location, player, direction, board.board_array())
+        word = Word(word_to_play, location, player, direction, self.board.board_array())
 
-        #If the first word throws an error, creates a recursive loop until the information is given correctly.
-        while word.check_word() != True:
-            print (word.check_word())
-            word.set_word(input("Word to play: "))
-            location = []
-            col = input("Column number: ")
-            row = input("Row number: ")
-            if (col == "" or row == "") or (col not in [str(x) for x in range(15)] or row not in [str(x) for x in range(15)]):
-                location = [-1, -1]
-            else:
-                word.set_location([int(row), int(col)])
-            word.set_direction(input("Direction of word (right or down): "))
+        # return error, ask user to play different word
+        word_valid = word.check_word(self.round_number, self.players)
+        if (word_valid != True):
+            return word_valid
 
         #If the user has confirmed that they would like to skip their turn, skip it.
         #Otherwise, plays the correct word and prints the board.
         if word.get_word() == "":
             print("Your turn has been skipped.")
-            skipped_turns += 1
+            self.skipped_turns += 1
         else:
-
-            board.place_word(word_to_play, location, direction, player)
+            self.board.place_word(word_to_play, location, direction, player, self.bag)
             word.calculate_word_score()
-            skipped_turns = 0
-
-        #Prints the current player's score
-        print("\n" + player.get_name() + "'s score is: " + str(player.get_score()))
+            self.skipped_turns = 0
 
         #Gets the next player.
-        if players.index(player) != (len(players)-1):
-            player = players[players.index(player)+1]
-        else:
-            player = players[0]
-            round_number += 1
+        self.current_player += 1
+        self.current_player %= 2
+        if (self.current_player == 0):
+            self.round_number += 1
 
-        #Recursively calls the function in order to play the next turn.
-        turn(player, board, bag)
 
-    #If the number of skipped turns is over 6 or the bag has both run out of tiles and a player is out of tiles, end the game.
-    else:
-        end_game()
-
-def start_game():
-    #Begins the game and calls the turn function.
-    global round_number, players, skipped_turns
-    board = Board()
-    bag = Bag()
-
-    #Asks the player for the number of players.
-    num_of_players = int(input("\nPlease enter the number of players (2-4): "))
-    while num_of_players < 2 or num_of_players > 4:
-        num_of_players = int(input("This number is invalid. Please enter the number of players (2-4): "))
-
-    #Welcomes players to the game and allows players to choose their name.
-    print("\nWelcome to Scrabble! Please enter the names of the players below.")
-    players = []
-    for i in range(num_of_players):
-        players.append(Player(bag))
-        players[i].set_name(input("Please enter player " + str(i+1) + "'s name: "))
-
-    #Sets the default value of global variables.
-    round_number = 1
-    skipped_turns = 0
-    current_player = players[0]
-    turn(current_player, board, bag)
-
-def end_game():
-    #Forces the game to end when the bag runs out of tiles.
-    global players
-    highest_score = 0
-    winning_player = ""
-    for player in players:
-        if player.get_score > highest_score:
-            highest_score = player.get_score()
-            winning_player = player.get_name()
-    print("The game is over! " + player.get_name() + ", you have won!")
-
-    if input("\nWould you like to play again? (y/n)").upper() == "Y":
-        start_game()
-
-start_game()
+    def end_game(self):
+        #Forces the game to end when the bag runs out of tiles.
+        highest_score = 0
+        winning_player = ""
+        for player in self.players:
+            if player.get_score > highest_score:
+                highest_score = player.get_score()
+                winning_player = player.get_name()
+        print("The game is over! " + player.get_name() + ", you have won!")

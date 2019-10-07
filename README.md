@@ -10,5 +10,6 @@ This project is built up of the 4 modules listed below:
 
 ### Get started
 
-* create a virtual env for this project
+* create a virtual env for this project (must use Python3)
 * run `pip install -r requirements.txt`
+* run `python main.py`
