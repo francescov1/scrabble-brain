@@ -412,6 +412,9 @@ class Game:
 
         print("")
 
+    def get_board_data(self):
+        return self.board.board_array()
+
     # TODO
     def bot_turn(self):
         print('bot turn')
@@ -470,4 +473,5 @@ class Game:
             if player.get_score > highest_score:
                 highest_score = player.get_score()
                 winning_player = player.get_name()
-        print("The game is over! " + player.get_name() + ", you have won!")
+
+        return "The game is over! " + player.get_name() + ", you have won!"
