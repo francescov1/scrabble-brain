@@ -249,8 +249,8 @@ class Board:
         #Places the word going downwards
         elif direction.lower() == "d":
             for i in range(len(word)):
-                if self.board[location[0]][location[1]+i] != "   ":
-                    premium_spots.append((word[i], self.board[location[0]][location[1]+i]))
+                if self.board[location[0]+i][location[1]] != "   ":
+                    premium_spots.append((word[i], self.board[location[0]+i][location[1]]))
                 self.board[location[0]+i][location[1]] = " " + word[i] + " "
 
         #Removes tiles from player's rack and replaces them with tiles from the bag.
@@ -416,11 +416,9 @@ class Game:
     def get_board_data(self):
         return self.board.board_array()
 
-    # TODO
     def bot_turn(self):
         print('bot turn')
-        word_to_play = word_rank(self.players[1].get_rack_str(), self.get_board_data())
-        print(word_to_play)
+        word_to_play = word_rank(self.players[1].get_rack_str(), self.get_board_data(), self.round_number, self.players)
         self.player_turn(word_to_play['word'], word_to_play['col'], word_to_play['row'], word_to_play['direction'])
 
     def is_ended(self):

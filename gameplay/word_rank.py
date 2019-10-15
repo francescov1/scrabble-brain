@@ -1,6 +1,7 @@
 from itertools import combinations
 from bisect import bisect_left
 from word_position import word_position
+import scrabble
 
 # Scores for playing letters 
 SCORES = {"a": 1, "c": 3, "b": 3, "e": 1, "d": 2, "g": 2,
@@ -85,12 +86,23 @@ def get_top_words(playable, board, rack):
         indx += 1
     return sorted(scored, key=lambda k: k['score'], reverse=True)
 
+# Check if word can be played on the board
+def word_check(word, board, round_number, players):
+    word_to_play = scrabble.Word(word['word'], [word['row'], word['col']], players[1], word['direction'], board)
+    return word_to_play.check_word(round_number, players)
+
 # Given a players rack and the board find the highest scoring valid 
 # word to play and return information needed to play
-def word_rank(rack, board):
-    print(rack)
+def word_rank(rack, board, round_number, players):
     mod_rack = rack.split(", ").copy()
     mod_rack = [x.lower() for x in mod_rack]
     playable = word_position(board)
     scored = get_top_words(playable, board, mod_rack)
-    return get_game_play(scored[0], playable, board)
+    check = False
+    word_indx = 0
+    while check != True:
+        word_to_play = get_game_play(scored[word_indx], playable, board)
+        check = word_check(word_to_play, board, round_number, players)
+        print(word_to_play, check)
+        word_indx += 1
+    return word_to_play
