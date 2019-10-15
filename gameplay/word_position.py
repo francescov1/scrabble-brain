@@ -12,6 +12,7 @@ def word_position(board):
         i = pair[0]
         j = pair[1]
         if [i, j + 1] not in word_indx and [i, j - 1] not in word_indx:
-            playable.append(pair.append('r'))
+            playable.append([i, j, 'r'])
         elif [i + 1, j] not in word_indx and [i - 1, j] not in word_indx:
-           playable.append(pair.append('d'))
+           playable.append([i, j, 'd'])
+    return playable 
