@@ -1,7 +1,9 @@
 from itertools import combinations
 from bisect import bisect_left
 from word_position import word_position
-import scrabble
+import scrabbles
+
+# TODO incorperate blank tiles and premium squares to algorithm
 
 # Scores for playing letters 
 SCORES = {"a": 1, "c": 3, "b": 3, "e": 1, "d": 2, "g": 2,
@@ -103,6 +105,5 @@ def word_rank(rack, board, round_number, players):
     while check != True:
         word_to_play = get_game_play(scored[word_indx], playable, board)
         check = word_check(word_to_play, board, round_number, players)
-        print(word_to_play, check)
         word_indx += 1
     return word_to_play
