@@ -11,7 +11,7 @@ SCORES = {"a": 1, "c": 3, "b": 3, "e": 1, "d": 2, "g": 2,
 
 
 def load_vars():
-    f = open('C:\\Users\\Laura\\Documents\\University\\5th Year Eng\\ENPH 454\\ScrabbleBot\\scrabble-brain\\gameplay\\anadict.txt', 'r')
+    f = open('anadict.txt', 'r')
     ana_dict = f.read().split('\n')
     f.close()
     return ana_dict
