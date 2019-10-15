@@ -1,4 +1,5 @@
 from random import shuffle
+from word_rank import word_rank
 
 """
 Scrabble Game
@@ -431,9 +432,12 @@ class Game:
         else:
             return True
 
+
     # word [type string], col/row [type num], direction [r or d]
     def player_turn(self, word_to_play, col, row, direction):
         player = self.players[self.current_player]
+        #Code added to let BESSIE pick a word to play 
+        word_rank(player.get_rack_str(), board.board_array(), round_number)
         location = []
 
         if (col > 14 or col < 0) or (row > 14 or row < 0):
