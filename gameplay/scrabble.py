@@ -419,6 +419,9 @@ class Game:
     # TODO
     def bot_turn(self):
         print('bot turn')
+        word_to_play = word_rank(self.players[1].get_rack_str(), self.get_board_data())
+        print(word_to_play)
+        self.player_turn(word_to_play['word'], word_to_play['col'], word_to_play['row'], word_to_play['direction'])
 
     def is_ended(self):
         player = self.players[self.current_player]
@@ -437,9 +440,7 @@ class Game:
     def player_turn(self, word_to_play, col, row, direction):
         player = self.players[self.current_player]
         #Code added to let BESSIE pick a word to play 
-        word_rank(player.get_rack_str(), board.board_array(), round_number)
         location = []
-
         if (col > 14 or col < 0) or (row > 14 or row < 0):
             location = [-1, -1]
         else:

@@ -58,9 +58,9 @@ def get_game_play(word, playable, board):
     # On all other turns position the starting letter such that 
     # the letters already on the board line up with the word
     else:
-        if word_info[2] == 'right':
+        if word_info[2] == 'r':
             col = col - len(ltr_split[0])
-        elif word_info[2] == 'down':
+        elif word_info[2] == 'd':
             row = row - len(ltr_split[0])
     return {'word': word['word'],
             'col': col,
@@ -87,10 +87,10 @@ def get_top_words(playable, board, rack):
 
 # Given a players rack and the board find the highest scoring valid 
 # word to play and return information needed to play
-def word_rank(rack, board, round_number):
+def word_rank(rack, board):
+    print(rack)
     mod_rack = rack.split(", ").copy()
     mod_rack = [x.lower() for x in mod_rack]
     playable = word_position(board)
     scored = get_top_words(playable, board, mod_rack)
-    game_play = get_game_play(scored[0], playable, board)
-    print(game_play)
+    return get_game_play(scored[0], playable, board)
