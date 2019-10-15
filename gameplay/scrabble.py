@@ -395,7 +395,7 @@ def turn(player, board, bag):
         print("\n" + player.get_name() + "'s Letter Rack: " + player.get_rack_str())
 
         #Code added to let BESSIE pick a word to play 
-        word_rank(player.get_rack_str(), board.board_array())
+        word_rank(player.get_rack_str(), board.board_array(), round_number)
 
 
 

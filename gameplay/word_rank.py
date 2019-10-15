@@ -26,7 +26,8 @@ def find_words(rack, ana_dict, board_ltr):
     found_words = []
     for i in range(1, len(rack)+1):
         for comb in combinations(rack, i):
-            comb = (board_ltr,) + comb
+            if board_ltr != '':
+                comb = (board_ltr,) + comb
             ana = ''.join(sorted(comb))
             j = bisect_left(ana_dict, ana)
             if j == len(ana_dict):
@@ -35,7 +36,7 @@ def find_words(rack, ana_dict, board_ltr):
             if words[0] == ana:
                 found_words.extend(words[1:])
     return found_words
-# def play_row(play_info, word)
+
 def word_dict(word, indx):
     return {'word': word,
             'score': score_word(word),
@@ -45,28 +46,32 @@ def get_game_play(word, playable, board):
     word_info = playable[word['index']]
     board_ltr = board[word_info[0]][word_info[1]]
     board_ltr = board_ltr.lower().strip()
-    tiles = word['word'].split(board_ltr)
-    row = word_info[1]
-    col = word_info[0]
+    ltr_split = word['word'].split(board_ltr)
+    if len(ltr_split[0]) == len(word['word']):
+        ltr_split[0] = ''
+    row = word_info[0]
+    col = word_info[1]
     if word_info[2] == 'right':
-        row = row - len(tiles[0])
-    elif word_info[2] == 'left':
-        col = col - len(tiles[0])
+        col = col - len(ltr_split[0])
+    elif word_info[2] == 'down':
+        row = row - len(ltr_split[0])
     return {'word': word['word'],
             'col': col,
             'row': row,
             'direction': word_info[2]}
 
-def word_rank(rack, board):
-    board = [['TWS', '   ', '   ', 'DLS', '   ', '   ', '   ', 'TWS', '   ', '   ', '   ', 'DLS', '   ', '   ', 'TWS'], ['   ', 'DWS', '   ', '   ', '   ', 'TLS', '   ', '   ', '   ', 'TLS', '   ', '   ', '   ', 'DWS', '   '], ['   ', '   ', 'DWS', '   ', '   ', '   ', 'DLS', '   ', 'DLS', '   ', '   ', '   ', 'DWS', '   ', '   '], ['DLS', '   ', '   ', 'DWS', '   ', '   ', '   ', 'DLS', '   ', '   ', '   ', 'DWS', '   ', '   ', 'DLS'], ['   ', '   ', '   ', '   ', 'DWS', '   ', '   ', '   ', '   ', '   ', 'DWS', '   ', '   ', '   ', '   '], ['   ', 'TLS', '   ', '   ', '   ', 'TLS', '   ', '   ', '   ', 'TLS', '   ', '   ', '   ', 'TLS', '   '], ['   ', '   ', 'DLS', '   ', '   ', '   ', 'DLS', '   ', 'DLS', '   ', '   ', '   ', 'DLS', '   ', '   '], ['TWS', '   ', '   ', 'DLS', '   ', '   ', '   ', ' R ', ' O ', ' A ', ' D ', 'DLS', '   ', '   ', 'TWS'], ['   ', '   ', 'DLS', '   ', '   ', '   ', ' W ', ' A ', ' T ', ' T ', '   ', '   ', 'DLS', '   ', '   '], ['   ', 'TLS', '   ', '   ', '   ', 'TLS', '   ', ' R ', '   ', 'TLS', '   ', '   ', '   ', 'TLS', '   '], ['   ', '   ', '   ', '   ', ' J ', ' O ', ' K ', ' E ', '   ', '   ', 'DWS', '   ', '   ', '   ', '   '], ['DLS', '   ', '   ', 'DWS', '   ', '   ', '   ', 'DLS', '   ', '   ', '   ', 'DWS', '   ', '   ', 'DLS'], ['   ', '   ', 'DWS', '   ', '   ', '   ', 'DLS', '   ', 'DLS', '   ', '   ', '   ', 'DWS', '   ', '   '], ['   ', 'DWS', '   ', '   ', '   ', 'TLS', '   ', '   ', '   ', 'TLS', '   ', '   ', '   ', 'DWS', '   '], ['TWS', '   ', '   ', 'DLS', '   ', '   ', '   ', 'TWS', '   ', '   ', '   ', 'DLS', '   ', '   ', 'TWS']]
+def word_rank(rack, board, round_number):
     rack_new = rack.split(", ").copy()
     rack_new = [x.lower() for x in rack_new]
     playable = word_position(board)
     ana_dict = load_vars()
     scored = []
+    indx = 0
     for pair in playable:
-        indx = 0
-        board_ltr = board[pair[0]][pair[1]].lower().strip()
+        if board[7][7] == ' * ':
+            board_ltr = ''
+        else:
+            board_ltr = board[pair[0]][pair[1]].lower().strip()
         found_words = set(find_words(rack_new, ana_dict, board_ltr))
         scores = [word_dict(word, indx) for word in found_words]
         scored.extend(scores)
