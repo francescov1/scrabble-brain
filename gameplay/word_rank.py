@@ -1,7 +1,7 @@
 from itertools import combinations
 from bisect import bisect_left
 from word_position import word_position
-import scrabbles
+import scrabble
 
 # TODO incorperate blank tiles and premium squares to algorithm
 
