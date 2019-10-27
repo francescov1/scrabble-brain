@@ -22,6 +22,8 @@ def start_game():
 # performs a player turn and a bot turn
 # TODO: instead of a start route, simply start game from round route if
 # no game currently exists
+# - if there is no game variable and the move made by the player is not
+# the first move, show an error (game state deleted from brain memory) 
 @app.route('/round', methods=['POST'])
 def game_round():
     data = request.get_json()
