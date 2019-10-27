@@ -20,12 +20,14 @@ def start_game():
     return jsonify({ "board": this.game.get_board_data() })
 
 # performs a player turn and a bot turn
-@app.route('/player_turn', methods=['POST'])
-def player_turn():
+# TODO: instead of a start route, simply start game from round route if
+# no game currently exists
+@app.route('/round', methods=['POST'])
+def game_round():
     data = request.get_json()
 
     this.game.player_turn(
-        data['word_to_play'],
+        data['word_played'],
         data['col'],
         data['row'],
         data['direction']
