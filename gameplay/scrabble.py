@@ -286,6 +286,7 @@ class Word:
         #Assuming that the player is not skipping the turn:
         if self.word != "":
 
+            # TODO Fix blank tile function and program the bot to use them
             #Allows for players to declare the value of a blank tile.
             if "#" in self.word:
                 while len(blank_tile_val) != 1:
