@@ -350,7 +350,7 @@ class Word:
             else:
                 return "Please enter a word."
 
-    def calculate_word_score(self):
+    def calculate_word_score(self, add_score):
         #Calculates the score of a word, allowing for the impact by premium squares.
         global LETTER_VALUES, premium_spots
         premium_spots = []
@@ -368,7 +368,10 @@ class Word:
                 word_score *= 3
             elif spot[1] == "DWS":
                 word_score *= 2
-        self.player.increase_score(word_score)
+        if add_score:
+            self.player.increase_score(word_score)
+        else:
+            return word_score
 
     def set_word(self, word):
         self.word = word
@@ -419,7 +422,7 @@ class Game:
     def bot_turn(self):
         print('bot turn')
         word_to_play = word_rank(self.players[1].get_rack_str(), self.get_board_data(), self.round_number, self.players)
-        self.player_turn(word_to_play['word'], word_to_play['col'], word_to_play['row'], word_to_play['direction'])
+        self.player_turn(word_to_play.word, word_to_play.location[1], word_to_play.location[0], word_to_play.direction)
 
     def is_ended(self):
         player = self.players[self.current_player]
@@ -458,7 +461,7 @@ class Game:
             self.skipped_turns += 1
         else:
             self.board.place_word(word_to_play, location, direction, player, self.bag)
-            word.calculate_word_score()
+            word.calculate_word_score(True)
             self.skipped_turns = 0
 
         #Gets the next player.
