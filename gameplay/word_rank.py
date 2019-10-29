@@ -4,7 +4,7 @@ from word_position import word_position
 import scrabble
 import time
 
-# TODO incorperate blank tiles and premium squares to algorithm, randomly breaks probably should look into that
+# TODO incorperate blank tiles, randomly breaks probably should look into that
 # look into fixing error that happens when a space is in the word
 
 # Load words from the anagram text file
