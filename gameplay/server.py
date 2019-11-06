@@ -18,7 +18,7 @@ def end_game():
 # ensure that if no game exists, the board only contains one word
 def verify_new_game(board_arr):
     # TODO: check if there is one one word in board_arr
-    return True # or False
+    return True
 
 # TODO: need to send back info about each turn (ie current score, if turn was
 # skipped or not, updated board)
@@ -31,7 +31,6 @@ def game_round():
 
     if (this.game is None):
         if (verify_new_game(board_arr)):
-            # dont think theres much use to take the player's name?
             player_name = "player"
             this.game = scrabble.Game(player_name)
 

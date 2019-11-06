@@ -402,6 +402,18 @@ class Game:
         self.players = players
         self.current_player = 0
 
+    def get_word_played(self, new_board):
+        # if one letter found, need to figure out which direction word is going
+        # if multiple letters, we know the direction
+        old_board = self.board.board_array()
+        for (i, row) in enumerate(old_board):
+            for (j, letter) in enumerate(row):
+                letter = letter.strip()
+                if letter != new_board[i,j]:
+                    # new letter
+                    print("new letter \"" + letter + "\" at [" + str(i) + ", " + str(j) + "]")
+                    #TODO: report new word
+
     def print_game(self):
         players = self.players
         print("\nRound " + str(self.round_number) + ": " + players[self.current_player].get_name() + "'s turn \n")
@@ -441,7 +453,7 @@ class Game:
     # word [type string], col/row [type num], direction [r or d]
     def player_turn(self, word_to_play, col, row, direction):
         player = self.players[self.current_player]
-        #Code added to let BESSIE pick a word to play 
+        #Code added to let BESSIE pick a word to play
         location = []
         if (col > 14 or col < 0) or (row > 14 or row < 0):
             location = [-1, -1]
