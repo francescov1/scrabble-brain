@@ -35,22 +35,23 @@ def find_words(rack, ana_dict, board_ltr):
 # Given a playable word calculate location to place the fist letter
 def get_word(word, indx, playable, board, players):
     word_info = playable[indx]
-    board_ltr = board[word_info[0]][word_info[1]]
+    print(playable)
+    board_ltr = board[word_info['row']][word_info['col']]
     board_ltr = board_ltr.lower().strip()
     ltr_split = word.split(board_ltr)
-    row = word_info[0]
-    col = word_info[1]
+    row = word_info['row']
+    col = word_info['col']
     # In the case of the first turn where there aren't words to play around 
     if len(ltr_split[0]) == len(word):
         ltr_split[0] = ''
     # On all other turns position the starting letter such that 
     # the letters already on the board line up with the word
     else:
-        if word_info[2] == 'r':
+        if word_info['direction'] == 'r':
             col = col - len(ltr_split[0])
-        elif word_info[2] == 'd':
+        elif word_info['direction'] == 'd':
             row = row - len(ltr_split[0])
-    return scrabble.Word(word, [row, col], players[1], word_info[2], board)
+    return scrabble.Word(word, [row, col], players[1], word_info['direction'], board)
 
 #  Find list of playable words given a list of valid positions
 #  returns list of words sorted by highest score
@@ -58,12 +59,13 @@ def get_top_words(playable, board, rack, players):
     ana_dict = load_vars()
     scored = []
     indx = 0
-    for pair in playable:
+    # TODO update function to take in multiple letters (in the correct order)
+    for info in playable:
         # Check to see if it is the first turn (no board letters to play around)
         if board[7][7] == ' * ':
             board_ltr = ''
         else:
-            board_ltr = board[pair[0]][pair[1]].lower().strip()
+            board_ltr = board[info['row']][info['col']].lower().strip()
         found_words = set(find_words(rack, ana_dict, board_ltr))
         # put word objects
         scored = []
