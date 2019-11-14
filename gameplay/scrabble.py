@@ -277,7 +277,7 @@ class Word:
         #Also controls the overlapping of words.
 
         word_score = 0
-        dictionary = open("dic.txt").read()
+        dictionary = open('C:\\Users\\Laura\\Documents\\University\\5th Year Eng\\ENPH 454\\ScrabbleBot\\scrabble-brain\\gameplay\\dic.txt').read()
 
         current_board_ltr = ""
         needed_tiles = ""
@@ -434,7 +434,7 @@ class Game:
 
     def bot_turn(self):
         print('bot turn')
-        word_to_play = word_rank(self.players[1].get_rack_str(), self.get_board_data(), self.round_number, self.players)
+        word_to_play = word_rank(self.players[1].get_rack_str(), self.get_board_data(), self.round_number, self.players, 1)
         self.player_turn(word_to_play.word, word_to_play.location[1], word_to_play.location[0], word_to_play.direction)
 
     def is_ended(self):
