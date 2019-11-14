@@ -401,7 +401,7 @@ class Game:
         players[1].set_name("Bot")
         self.players = players
         self.current_player = 0
-
+        
     def get_word_played(self, new_board):
         # if one letter found, need to figure out which direction word is going
         # if multiple letters, we know the direction
@@ -432,9 +432,9 @@ class Game:
     def get_board_data(self):
         return self.board.board_array()
 
-    def bot_turn(self):
+    def bot_turn(self, player):
         print('bot turn')
-        word_to_play = word_rank(self.players[1].get_rack_str(), self.get_board_data(), self.round_number, self.players, 1)
+        word_to_play = word_rank(self.players[player].get_rack_str(), self.get_board_data(), self.round_number, self.players, player)
         self.player_turn(word_to_play.word, word_to_play.location[1], word_to_play.location[0], word_to_play.direction)
 
     def is_ended(self):
@@ -453,7 +453,7 @@ class Game:
     # word [type string], col/row [type num], direction [r or d]
     def player_turn(self, word_to_play, col, row, direction):
         player = self.players[self.current_player]
-        #Code added to let BESSIE pick a word to play
+        #Code added to let BESSIE pick a word to play 
         location = []
         if (col > 14 or col < 0) or (row > 14 or row < 0):
             location = [-1, -1]
