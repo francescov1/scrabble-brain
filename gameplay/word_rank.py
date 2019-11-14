@@ -9,7 +9,7 @@ import time
 
 # Load words from the anagram text file
 def load_vars():
-    f = open("c:\\Users\\Laura\\Documents\\University\\5th Year Eng\\ENPH 454\\ScrabbleBot\\scrabble-brain\\gameplay\\anadict.txt", 'r')
+    f = open("anadict.txt", 'r')
     ana_dict = f.read().split('\n')
     f.close()
     return ana_dict
@@ -29,7 +29,7 @@ def find_words(rack, ana_dict, board_ltr):
                 continue
             words = ana_dict[j].split()
             if words[0] == ana:
-                for word in words:
+                for word in words[1:]:
                     if word.find(board_ltr) != -1:
                         found_words.append(word)     
     return found_words
@@ -66,7 +66,6 @@ def get_top_words(playable, board, rack, players):
             board_ltr = ''.join(info['letters']).lower().strip()
         found_words = set(find_words(rack, ana_dict, board_ltr))
         # put word objects
-        scored = []
         for word in found_words:
             word_obj = get_word(word, info, board, players)
             score = word_obj.calculate_word_score(False)
@@ -81,11 +80,10 @@ def word_rank(rack, board, round_number, players):
     playable = word_position(board)
     scored = get_top_words(playable, board, mod_rack, players)
     check = False
-    word_indx = 0
-    # while check != True:
-    #     word_indx += 1
-    #     if word_indx >= len(scored):
-    #         print('cannot play word')
-    #     check = scored[word_indx]['word'].check_word(round_number, players)
-    print(scored[0])
+    word_indx = -1
+    while check != True:
+        word_indx += 1
+        if word_indx >= len(scored):
+            print('cannot play word')
+        check = scored[word_indx]['word'].check_word(round_number, players)
     return scored[word_indx]['word']
