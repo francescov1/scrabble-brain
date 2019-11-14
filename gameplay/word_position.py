@@ -8,9 +8,9 @@ def get_letter_group(letters, direction, col, row):
 def get_ltr_groups(word_indx, board, playable, direction):
     i = 0
     while i < len(word_indx):
-        col = word_indx[i][0]
-        row = word_indx[i][1]
-        letters = [board[col][row].strip()]
+        col = word_indx[i][1]
+        row = word_indx[i][0]
+        letters = [board[row][col].strip()]
         if i == len(word_indx) - 1:
             letter_group = get_letter_group(letters, direction, col, row)
             playable.append(letter_group)
