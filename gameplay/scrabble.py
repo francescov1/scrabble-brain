@@ -285,7 +285,10 @@ class Word:
 
         #Assuming that the player is not skipping the turn:
         if self.word != "":
-
+            
+            #Raises an error if the location of the word will be out of bounds.
+            if self.location[0] > 14 or self.location[1] > 14 or self.location[0] < 0 or self.location[1] < 0 or (self.direction == "d" and (self.location[0]+len(self.word)-1) > 14) or (self.direction == "r" and (self.location[1]+len(self.word)-1) > 14):
+                return False
             # TODO Fix blank tile function and program the bot to use them
             #Allows for players to declare the value of a blank tile.
             if "#" in self.word:
@@ -335,10 +338,6 @@ class Word:
                 if letter not in self.player.get_rack_str() or self.player.get_rack_str().count(letter) < needed_tiles.count(letter):
                     return "You do not have the tiles for this word\n"
 
-            #Raises an error if the location of the word will be out of bounds.
-            if self.location[0] > 14 or self.location[1] > 14 or self.location[0] < 0 or self.location[1] < 0 or (self.direction == "d" and (self.location[0]+len(self.word)-1) > 14) or (self.direction == "r" and (self.location[1]+len(self.word)-1) > 14):
-                return "Location out of bounds.\n"
-
             #Ensures that first turn of the game will have the word placed at (7,7).
             if round_number == 1 and players[0] == self.player and self.location != [7,7]:
                 return "The first turn must begin at location (7, 7).\n"
@@ -354,21 +353,36 @@ class Word:
     def calculate_word_score(self, add_score):
         #Calculates the score of a word, allowing for the impact by premium squares.
         global LETTER_VALUES, premium_spots
-        premium_spots = []
         word_score = 0
-        for letter in self.word:
-            for spot in premium_spots:
-                if letter == spot[0]:
-                    if spot[1] == "TLS":
-                        word_score += LETTER_VALUES[letter] * 2
-                    elif spot[2] == "DLS":
-                        word_score += LETTER_VALUES[letter]
-            word_score += LETTER_VALUES[letter]
-        for spot in premium_spots:
-            if spot[1] == "TWS":
-                word_score *= 3
-            elif spot[1] == "DWS":
-                word_score *= 2
+        word_mult = [1, False]
+        squares = []
+        if  self.direction == 'r':
+            word_end = self.location[1] + len(self.word)
+            squares = self.board[self.location[0]][self.location[1]:word_end]
+        else:
+            word_end = self.location[0] + len(self.word)
+            rows = self.board[self.location[0]:word_end]
+            for row in rows:
+                squares.append(row[self.location[1]])
+
+        if word_end > 14 or self.location[0] < 0 or self.location[1] < 0:
+            return 0
+
+        for i in range(len(self.word)):
+            if squares[i][0].isspace() and squares[i][2].isspace() and squares[i][1] != '*' and not squares[i][1].isspace():
+                pass
+            elif squares[i] == "TLS":
+                word_score += LETTER_VALUES[self.word[i]] * 3
+            elif squares[i] == "DLS":
+                word_score += LETTER_VALUES[self.word[i]] * 2
+            elif squares[i] == "DWS" and not word_mult[1]:
+                word_mult = [2, False]
+            elif squares[i] == "TWS":
+                word_mult = [3, True]
+            else:
+                word_score += LETTER_VALUES[self.word[i]]
+
+        word_score *= word_mult[0]
         if add_score:
             self.player.increase_score(word_score)
         else:
@@ -473,8 +487,8 @@ class Game:
             print("Your turn has been skipped.")
             self.skipped_turns += 1
         else:
-            self.board.place_word(word_to_play, location, direction, player, self.bag)
             word.calculate_word_score(True)
+            self.board.place_word(word_to_play, location, direction, player, self.bag)
             self.skipped_turns = 0
 
         #Gets the next player.

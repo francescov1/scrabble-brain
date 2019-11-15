@@ -9,7 +9,7 @@ import time
 
 # Load words from the anagram text file
 def load_vars():
-    f = open("anadict.txt", 'r')
+    f = open("C:\\Users\\Laura\\Documents\\University\\5th Year Eng\\ENPH 454\\ScrabbleBot\\scrabble-brain\\gameplay\\anadict.txt", 'r')
     ana_dict = f.read().split('\n')
     f.close()
     return ana_dict
@@ -85,5 +85,6 @@ def word_rank(rack, board, round_number, players, player):
         word_indx += 1
         if word_indx >= len(scored):
             print('cannot play word')
+            return False
         check = scored[word_indx]['word'].check_word(round_number, players)
     return scored[word_indx]['word']
