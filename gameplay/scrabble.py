@@ -352,10 +352,11 @@ class Word:
 
     def calculate_word_score(self, add_score):
         #Calculates the score of a word, allowing for the impact by premium squares.
-        global LETTER_VALUES, premium_spots
+        global LETTER_VALUES
         word_score = 0
-        word_mult = [1, False]
+        word_mult = 0
         squares = []
+        board_ltrs = []
         if  self.direction == 'r':
             word_end = self.location[1] + len(self.word)
             squares = self.board[self.location[0]][self.location[1]:word_end]
@@ -368,21 +369,29 @@ class Word:
         if word_end > 14 or self.location[0] < 0 or self.location[1] < 0:
             return 0
 
+        if self.location == [7,7]:
+            word_mult = 2
+
         for i in range(len(self.word)):
             if squares[i][0].isspace() and squares[i][2].isspace() and squares[i][1] != '*' and not squares[i][1].isspace():
+                board_ltrs.append(squares[i][1])
                 pass
             elif squares[i] == "TLS":
                 word_score += LETTER_VALUES[self.word[i]] * 3
             elif squares[i] == "DLS":
                 word_score += LETTER_VALUES[self.word[i]] * 2
-            elif squares[i] == "DWS" and not word_mult[1]:
-                word_mult = [2, False]
+            elif squares[i] == "DWS":
+                word_mult *= 2
             elif squares[i] == "TWS":
-                word_mult = [3, True]
+                word_mult *= 3
             else:
                 word_score += LETTER_VALUES[self.word[i]]
+        if word_mult != 0:
+            word_score *= word_mult
 
-        word_score *= word_mult[0]
+        if len(self.word) - len(board_ltrs) == 7:
+            word_score += 50
+        
         if add_score:
             self.player.increase_score(word_score)
         else:
