@@ -20,7 +20,7 @@ LETTER_VALUES = {"A": 1,
                  "G": 2,
                  "H": 4,
                  "I": 1,
-                 "J": 1,
+                 "J": 8,
                  "K": 5,
                  "L": 1,
                  "M": 3,
@@ -88,7 +88,7 @@ class Bag:
         self.add_to_bag(Tile("G", LETTER_VALUES), 3)
         self.add_to_bag(Tile("H", LETTER_VALUES), 2)
         self.add_to_bag(Tile("I", LETTER_VALUES), 9)
-        self.add_to_bag(Tile("J", LETTER_VALUES), 9)
+        self.add_to_bag(Tile("J", LETTER_VALUES), 1)
         self.add_to_bag(Tile("K", LETTER_VALUES), 1)
         self.add_to_bag(Tile("L", LETTER_VALUES), 4)
         self.add_to_bag(Tile("M", LETTER_VALUES), 2)
@@ -369,7 +369,7 @@ class Word:
         if word_end > 14 or self.location[0] < 0 or self.location[1] < 0:
             return 0
 
-        if self.location == [7,7]:
+        if self.location == [7,7] and self.board[7][7][1] == '*':
             word_mult = 2
 
         for i in range(len(self.word)):
@@ -391,7 +391,7 @@ class Word:
 
         if len(self.word) - len(board_ltrs) == 7:
             word_score += 50
-        
+
         if add_score:
             self.player.increase_score(word_score)
         else:
