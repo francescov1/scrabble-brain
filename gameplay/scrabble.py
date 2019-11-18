@@ -350,24 +350,71 @@ class Word:
             else:
                 return "Please enter a word."
 
-    def calculate_word_score(self, add_score):
-        #Calculates the score of a word, allowing for the impact by premium squares.
+    def get_letters(self, word_col, row):
+        word = []
+        space = False
+        while not space and row <= 0 and row < 15:
+            if len(word_col[row].strip()) == 1:
+                word.append(word_col[row].strip())
+                row += 1 
+            else:
+                space = True
+        return word
+
+    def ltr_search(self, i, row, word_score, board):
+        word_col = [x[i] for x in board]
+        word = self.get_letters(word_col, row + 1)
+        word.extend(self.get_letters(word_col[::-1], 13 - row))
+        for ltr in word:
+            word_score += LETTER_VALUES[ltr]
+        return word_score
+
+    def is_letter(self, board, row, i):
+        try:
+            is_ltr = len(board[row][i][0].strip()) == 1
+        except IndexError:
+            is_ltr = False
+        return is_ltr
+
+    def get_other_words(self, start, row, end, board, word_score):
         global LETTER_VALUES
+        for i in range(start, end):
+            word_score += self.ltr_search(row, i, word_score, board)
+            ltr_above = self.is_letter(board, row + 1, i)
+            ltr_below = self.is_letter(board, row - 1, i)
+            if ltr_above or ltr_below:
+                word_score += self.ltr_search(i, row, word_score, board)
+        return word_score
+
+    def calculate_word_score(self, add_score):
+        global LETTER_VALUES
+        loc = self.location
         word_score = 0
         word_mult = 0
         squares = []
         board_ltrs = []
-        if  self.direction == 'r':
-            word_end = self.location[1] + len(self.word)
-            squares = self.board[self.location[0]][self.location[1]:word_end]
+        # TODO MERGE?    
+        if self.direction == 'r':
+            stat = loc[0]
+            start = loc[1]
+            end = start + len(self.word) - 1
+            if end > 14 or end < 0 or loc[0] < 0  or loc[0] > 14 or loc[1] < 0 or loc[1] > 14:
+                return 0
+            word_score += self.get_other_words(start, stat, end, self.board, word_score)
+            word_end = loc[1] + len(self.word)
+            squares = self.board[loc[0]][loc[1]:word_end]
         else:
-            word_end = self.location[0] + len(self.word)
-            rows = self.board[self.location[0]:word_end]
+            stat = loc[1]
+            start = loc[0]
+            end = start + len(self.word) -1
+            if end > 14 or end < 0 or loc[0] < 0  or loc[0] > 14 or loc[1] < 0 or loc[1] > 14:
+                return 0
+            trans_board =  [list(i) for i in zip(*self.board)]
+            word_score += self.get_other_words(start, stat, end, trans_board, word_score)
+            word_end = loc[0] + len(self.word)
+            rows = self.board[loc[0]:word_end]
             for row in rows:
-                squares.append(row[self.location[1]])
-
-        if word_end > 14 or self.location[0] < 0 or self.location[1] < 0:
-            return 0
+                squares.append(row[loc[1]])
 
         if self.location == [7,7] and self.board[7][7][1] == '*':
             word_mult = 2
@@ -388,10 +435,6 @@ class Word:
                 word_score += LETTER_VALUES[self.word[i]]
         if word_mult != 0:
             word_score *= word_mult
-
-        if len(self.word) - len(board_ltrs) == 7:
-            word_score += 50
-
         if add_score:
             self.player.increase_score(word_score)
         else:
