@@ -353,7 +353,7 @@ class Word:
     def get_letters(self, word_col, row):
         word = []
         space = False
-        while not space and row <= 0 and row < 15:
+        while not space and row >= 0 and row < 15:
             if len(word_col[row].strip()) == 1:
                 word.append(word_col[row].strip())
                 row += 1 
@@ -364,25 +364,25 @@ class Word:
     def ltr_search(self, i, row, word_score, board):
         word_col = [x[i] for x in board]
         word = self.get_letters(word_col, row + 1)
-        word.extend(self.get_letters(word_col[::-1], 13 - row))
+        word.extend(self.get_letters(word_col[::-1], row + 1))
         for ltr in word:
             word_score += LETTER_VALUES[ltr]
         return word_score
 
     def is_letter(self, board, row, i):
         try:
-            is_ltr = len(board[row][i][0].strip()) == 1
+            space = board[row][i].strip()
+            is_ltr = len(space) == 1
         except IndexError:
             is_ltr = False
         return is_ltr
-
+    # check the spaces on both sides of the word for letters
     def get_other_words(self, start, row, end, board, word_score):
         global LETTER_VALUES
-        for i in range(start, end):
-            word_score += self.ltr_search(row, i, word_score, board)
-            ltr_above = self.is_letter(board, row + 1, i)
-            ltr_below = self.is_letter(board, row - 1, i)
-            if ltr_above or ltr_below:
+        for i in range(start, end + 1):
+            ltr_after = self.is_letter(board, row + 1, i)
+            ltr_before = self.is_letter(board, row - 1, i)
+            if ltr_after or ltr_before:
                 word_score += self.ltr_search(i, row, word_score, board)
         return word_score
 
@@ -401,18 +401,16 @@ class Word:
             if end > 14 or end < 0 or loc[0] < 0  or loc[0] > 14 or loc[1] < 0 or loc[1] > 14:
                 return 0
             word_score += self.get_other_words(start, stat, end, self.board, word_score)
-            word_end = loc[1] + len(self.word)
-            squares = self.board[loc[0]][loc[1]:word_end]
+            squares = self.board[loc[0]][loc[1]:end + 1]
         else:
             stat = loc[1]
             start = loc[0]
             end = start + len(self.word) -1
             if end > 14 or end < 0 or loc[0] < 0  or loc[0] > 14 or loc[1] < 0 or loc[1] > 14:
                 return 0
-            trans_board =  [list(i) for i in zip(*self.board)]
+            trans_board = [list(i) for i in zip(*self.board)]
             word_score += self.get_other_words(start, stat, end, trans_board, word_score)
-            word_end = loc[0] + len(self.word)
-            rows = self.board[loc[0]:word_end]
+            rows = self.board[loc[0]:end + 1]
             for row in rows:
                 squares.append(row[loc[1]])
 
@@ -420,7 +418,7 @@ class Word:
             word_mult = 2
 
         for i in range(len(self.word)):
-            if squares[i][0].isspace() and squares[i][2].isspace() and squares[i][1] != '*' and not squares[i][1].isspace():
+            if len(squares[i][0].strip()) == 1 and squares[i][1] != '*':
                 board_ltrs.append(squares[i][1])
                 pass
             elif squares[i] == "TLS":
