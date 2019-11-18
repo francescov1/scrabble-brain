@@ -350,6 +350,7 @@ class Word:
             else:
                 return "Please enter a word."
 
+    # get letters that are apart of the attached word
     def get_letters(self, word_col, row):
         word = []
         space = False
@@ -361,6 +362,7 @@ class Word:
                 space = True
         return word
 
+    # Get the score for the word that is attached to the played word
     def ltr_search(self, i, row, word_score, board):
         word_col = [x[i] for x in board]
         word = self.get_letters(word_col, row + 1)
@@ -369,6 +371,7 @@ class Word:
             word_score += LETTER_VALUES[ltr]
         return word_score
 
+    #check if there is a letter on the square
     def is_letter(self, board, row, i):
         try:
             space = board[row][i].strip()
@@ -376,6 +379,7 @@ class Word:
         except IndexError:
             is_ltr = False
         return is_ltr
+
     # check the spaces on both sides of the word for letters
     def get_other_words(self, start, row, end, board, word_score):
         global LETTER_VALUES
@@ -386,6 +390,7 @@ class Word:
                 word_score += self.ltr_search(i, row, word_score, board)
         return word_score
 
+    # calculate the score of the word being played, as well as words that are attached
     def calculate_word_score(self, add_score):
         global LETTER_VALUES
         loc = self.location
@@ -393,7 +398,8 @@ class Word:
         word_mult = 0
         squares = []
         board_ltrs = []
-        # TODO MERGE?    
+        # TODO MERGE the code in the if statements if possible 
+        # Calculate the score of words attached to the word being played   
         if self.direction == 'r':
             stat = loc[0]
             start = loc[1]
@@ -414,6 +420,7 @@ class Word:
             for row in rows:
                 squares.append(row[loc[1]])
 
+        # calculate the score of the word being played
         if self.location == [7,7] and self.board[7][7][1] == '*':
             word_mult = 2
 
