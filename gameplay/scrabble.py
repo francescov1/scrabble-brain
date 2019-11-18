@@ -363,13 +363,36 @@ class Word:
         return word
 
     # Get the score for the word that is attached to the played word
-    def ltr_search(self, i, row, word_score, board):
-        word_col = [x[i] for x in board]
-        word = self.get_letters(word_col, row + 1)
-        word.extend(self.get_letters(word_col[::-1], row + 1))
-        for ltr in word:
-            word_score += LETTER_VALUES[ltr]
-        return word_score
+    def ltr_search(self, col, row, board, ltr, spell_check):
+        word_mult = 1
+        word_col = [x[col] for x in board]
+        word_end = self.get_letters(word_col, row + 1)
+        word_start = self.get_letters(word_col[::-1], 15 - row)
+        if spell_check:
+            word = word_start[::-1] + [ltr] + word_end
+        else:
+            word = word_start + word_end
+            if word_col[row] == 'DWS':
+                word_mult = 2
+            elif word_col[row] == 'TWS':
+                word_mult = 3
+        return word, word_mult
+
+    # check the spaces on both sides of the word for letters
+    def get_other_words(self, start, row, end, board, played_ltrs, spell_check):
+        global LETTER_VALUES
+        words = []
+        for square in played_ltrs:
+            if self.direction == 'r':
+                col = square['col']
+            else:
+                col = square['row']
+            ltr_after = self.is_letter(board, row + 1, col)
+            ltr_before = self.is_letter(board, row - 1, col)
+            if ltr_after or ltr_before:
+                word, word_mult = self.ltr_search(col, row, board, square['ltr'], spell_check)
+                words.append({'word': word, 'ltr': square['ltr'] , 'ltr_indx': [row, col], 'multiplier': word_mult})
+        return words
 
     #check if there is a letter on the square
     def is_letter(self, board, row, i):
@@ -380,45 +403,58 @@ class Word:
             is_ltr = False
         return is_ltr
 
-    # check the spaces on both sides of the word for letters
-    def get_other_words(self, start, row, end, board, word_score):
-        global LETTER_VALUES
-        for i in range(start, end + 1):
-            ltr_after = self.is_letter(board, row + 1, i)
-            ltr_before = self.is_letter(board, row - 1, i)
-            if ltr_after or ltr_before:
-                word_score += self.ltr_search(i, row, word_score, board)
-        return word_score
-
-    # calculate the score of the word being played, as well as words that are attached
-    def calculate_word_score(self, add_score):
-        global LETTER_VALUES
-        loc = self.location
-        word_score = 0
-        word_mult = 0
+    def get_played_tiles(self, board):
+        player_ltrs = []
         squares = []
-        board_ltrs = []
-        # TODO MERGE the code in the if statements if possible 
-        # Calculate the score of words attached to the word being played   
+        loc = self.location
+        if self.direction == 'r':
+            end = loc[1] + len(self.word) - 1
+            squares = board[loc[0]][loc[1]:end + 1]
+        else:
+            end = loc[0] + len(self.word) - 1
+            squares = board[loc[1]][loc[0]: end + 1]
+        for i in range(len(squares)):
+            if len(squares[i].strip()) == 1 and squares[i].strip() != "*":
+                pass
+            else:
+                if self.direction == 'r':
+                    player_ltrs.append({'ltr': self.word[i], 'row': loc[0], 'col': loc[1] + i, 'score': 0})
+                else:
+                    player_ltrs.append({'ltr': self.word[i], 'row': loc[0] + i, 'col': loc[1], 'score': 0})
+        return player_ltrs, squares
+
+    def get_attached_words(self, spell_check):
+        loc = self.location
         if self.direction == 'r':
             stat = loc[0]
             start = loc[1]
-            end = start + len(self.word) - 1
-            if end > 14 or end < 0 or loc[0] < 0  or loc[0] > 14 or loc[1] < 0 or loc[1] > 14:
-                return 0
-            word_score += self.get_other_words(start, stat, end, self.board, word_score)
-            squares = self.board[loc[0]][loc[1]:end + 1]
+            board = self.board
         else:
             stat = loc[1]
             start = loc[0]
-            end = start + len(self.word) -1
-            if end > 14 or end < 0 or loc[0] < 0  or loc[0] > 14 or loc[1] < 0 or loc[1] > 14:
-                return 0
-            trans_board = [list(i) for i in zip(*self.board)]
-            word_score += self.get_other_words(start, stat, end, trans_board, word_score)
-            rows = self.board[loc[0]:end + 1]
-            for row in rows:
-                squares.append(row[loc[1]])
+            board = [list(i) for i in zip(*self.board)]
+        end = start + len(self.word) -1
+        if end > 14 or end < 0 or loc[0] < 0  or loc[0] > 14 or loc[1] < 0 or loc[1] > 14:
+            return 0 # change to invalid
+
+        played_ltrs, squares = self.get_played_tiles(board)   
+        return self.get_other_words(start, stat, end, board, played_ltrs, spell_check), squares
+    
+    # calculate the score of the word being played, as well as words that are attached
+    def calculate_word_score(self, add_score):
+        global LETTER_VALUES
+        word_score = 0
+        total_score = 0
+        word_mult = 0
+        squares = []
+        board_ltrs = []
+        attached_words, squares = self.get_attached_words(False)
+
+        for word in attached_words:
+            for ltr in word['ltr']:
+                word['score'] += LETTER_VALUES[ltr]
+            word['score'] *= word['multiplier']
+            total_score += word['score']
 
         # calculate the score of the word being played
         if self.location == [7,7] and self.board[7][7][1] == '*':
@@ -440,10 +476,11 @@ class Word:
                 word_score += LETTER_VALUES[self.word[i]]
         if word_mult != 0:
             word_score *= word_mult
+        total_score += word_score
         if add_score:
-            self.player.increase_score(word_score)
+            self.player.increase_score(total_score)
         else:
-            return word_score
+            return total_score
 
     def set_word(self, word):
         self.word = word
