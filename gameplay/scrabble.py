@@ -292,21 +292,43 @@ class Word:
             #Raises an error if the location of the word will be out of bounds.
             if self.location[0] > 14 or self.location[1] > 14 or self.location[0] < 0 or self.location[1] < 0 or (self.direction == "d" and (self.location[0]+len(self.word)-1) > 14) or (self.direction == "r" and (self.location[1]+len(self.word)-1) > 14):
                 return False
+
             # TODO Fix blank tile function and program the bot to use them
             #Allows for players to declare the value of a blank tile.
             if "#" in self.word:
                 while len(blank_tile_val) != 1:
                     blank_tile_val = input("Please enter the letter value of the blank tile: ")
-                self.word = self.word[:word.index("#")] + blank_tile_val.upper() + self.word[(word.index("#")+1):]
+                self.word = self.word[:self.word.index("#")] + blank_tile_val.upper() + self.word[(self.word.index("#")+1):]
 
             #Reads in the board's current values under where the word that is being played will go. Raises an error if the direction is not valid.
             if self.direction == "r":
+                # Check for adjacent letters and add them to the word
+                board_row = self.board[self.location[0]]
+                col = self.location[1]
+                end_ltrs = self.get_letters(board_row, col + len(self.word))
+                start_ltrs = self.get_letters(board_row[::-1], 15 - col)
+                if len(end_ltrs) > 0:
+                    self.word = self.word + ''.join(end_ltrs)
+                if len(start_ltrs) > 0:
+                    self.word = ''.join(start_ltrs[::-1]) + self.word
+                    self.location[1] -= len(self.word)
+
                 for i in range(len(self.word)):
                     if self.board[self.location[0]][self.location[1]+i][1] == " " or self.board[self.location[0]][self.location[1]+i] == "TLS" or self.board[self.location[0]][self.location[1]+i] == "TWS" or self.board[self.location[0]][self.location[1]+i] == "DLS" or self.board[self.location[0]][self.location[1]+i] == "DWS" or self.board[self.location[0]][self.location[1]+i][1] == "*":
                         current_board_ltr += " "
                     else:
                         current_board_ltr += self.board[self.location[0]][self.location[1]+i][1]
             elif self.direction == "d":
+                board_col = [x[self.location[1]] for x in self.board]
+                row = self.location[0]
+                end_ltrs = self.get_letters(board_col, row + len(self.word))
+                start_ltrs = self.get_letters(board_col[::-1], 15 - row)
+                if len(end_ltrs) > 0:
+                    self.word = self.word + ''.join(end_ltrs)
+                if len(start_ltrs) > 0:
+                    self.word = ''.join(start_ltrs[::-1]) + self.word
+                    self.location[0] -= len(self.word)
+
                 for i in range(len(self.word)):
                     if self.board[self.location[0]+i][self.location[1]] == "   " or self.board[self.location[0]+i][self.location[1]] == "TLS" or self.board[self.location[0]+i][self.location[1]] == "TWS" or self.board[self.location[0]+i][self.location[1]] == "DLS" or self.board[self.location[0]+i][self.location[1]] == "DWS" or self.board[self.location[0]+i][self.location[1]] == " * ":
                         current_board_ltr += " "

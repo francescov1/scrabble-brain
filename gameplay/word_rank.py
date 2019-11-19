@@ -81,4 +81,5 @@ def word_rank(rack, board, round_number, players, player):
     mod_rack = [x.lower() for x in mod_rack]
     playable = word_position(board)
     scored = get_top_words(playable, board, mod_rack, players, player, round_number)
+    check = scored[0]['word'].check_word(round_number, players)
     return scored[0]['word']
