@@ -55,7 +55,7 @@ def get_word(word, word_info, board, player):
 
 #  Find list of playable words given a list of valid positions
 #  returns list of words sorted by highest score
-def get_top_words(playable, board, rack, player):
+def get_top_words(playable, board, rack, players, player, round_number):
     ana_dict = load_vars()
     scored = []
     for info in playable:
@@ -67,9 +67,11 @@ def get_top_words(playable, board, rack, player):
         found_words = set(find_words(rack, ana_dict, board_ltr))
         # put word objects
         for word in found_words:
-            word_obj = get_word(word, info, board, player)
-            score = word_obj.calculate_word_score(False)
-            scored.append({'word': word_obj, 'score': score})
+            word_obj = get_word(word, info, board, players[player])
+            check = word_obj.check_word(round_number, players)
+            if check == True:
+                score = word_obj.calculate_word_score(False)
+                scored.append({'word': word_obj, 'score': score})
     return sorted(scored, key=lambda k: k['score'], reverse=True)
 
 # Given a players rack and the board find the highest scoring valid 
@@ -78,13 +80,5 @@ def word_rank(rack, board, round_number, players, player):
     mod_rack = rack.split(", ").copy()
     mod_rack = [x.lower() for x in mod_rack]
     playable = word_position(board)
-    scored = get_top_words(playable, board, mod_rack, players[player])
-    check = False
-    word_indx = -1
-    while check != True:
-        word_indx += 1
-        if word_indx >= len(scored):
-            print('cannot play word')
-            return False
-        check = scored[word_indx]['word'].check_word(round_number, players)
-    return scored[word_indx]['word']
+    scored = get_top_words(playable, board, mod_rack, players, player, round_number)
+    return scored[0]['word']

@@ -341,6 +341,14 @@ class Word:
             #Ensures that first turn of the game will have the word placed at (7,7).
             if round_number == 1 and players[0] == self.player and self.location != [7,7]:
                 return "The first turn must begin at location (7, 7).\n"
+
+            # Check that new words formed that are attached to the word played are real
+            attached_words, x  = self.get_attached_words(True)
+            for word_info in attached_words:
+                word = ''.join(word_info['word'])
+                if word not in dictionary:
+                    return 'invalid word attached'
+            
             return True
 
         #If the user IS skipping the turn, confirm. If the user replies with "Y", skip the player's turn. Otherwise, allow the user to enter another word.
@@ -391,7 +399,7 @@ class Word:
             ltr_before = self.is_letter(board, row - 1, col)
             if ltr_after or ltr_before:
                 word, word_mult = self.ltr_search(col, row, board, square['ltr'], spell_check)
-                words.append({'word': word, 'ltr': square['ltr'] , 'ltr_indx': [row, col], 'multiplier': word_mult})
+                words.append({'word': word, 'ltr': square['ltr'], 'ltr_indx': [row, col], 'score': 0, 'multiplier': word_mult})
         return words
 
     #check if there is a letter on the square
