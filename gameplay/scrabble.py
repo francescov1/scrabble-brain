@@ -271,6 +271,9 @@ class Word:
         self.player = player
         self.direction = direction.lower()
         self.board = board
+        self.attached_words = []
+        self.score = 0
+        self.board_squares = []
 
     def check_word(self, round_number, players):
         #Checks the word to make sure that it is in the dictionary, and that the location falls within bounds.
@@ -313,7 +316,7 @@ class Word:
                 return "Error: please enter a valid direction."
 
             #Raises an error if the word being played is not in the official scrabble dictionary (dic.txt).
-            if self.word not in dictionary:
+            if '\n' + self.word + '\n' not in dictionary:
                 return "Please enter a valid dictionary word.\n"
 
             #Ensures that the words overlap correctly. If there are conflicting letters between the current board and the word being played, raises an error.
@@ -321,7 +324,7 @@ class Word:
                 if current_board_ltr[i] == " ":
                     needed_tiles += self.word[i]
                 elif current_board_ltr[i] != self.word[i]:
-                    print("Current_board_ltr: " + str(current_board_ltr) + ", Word: " + self.word + ", Needed_Tiles: " + needed_tiles)
+                    # print("Current_board_ltr: " + str(current_board_ltr) + ", Word: " + self.word + ", Needed_Tiles: " + needed_tiles)
                     return "The letters do not overlap correctly, please choose another word."
 
             #If there is a blank tile, remove it's given value from the tiles needed to play the word.
@@ -330,7 +333,7 @@ class Word:
 
             #Ensures that the word will be connected to other words on the playing board.
             if (round_number != 1 or (round_number == 1 and players[0] != self.player)) and current_board_ltr == " " * len(self.word):
-                print("Current_board_ltr: " + str(current_board_ltr) + ", Word: " + self.word + ", Needed_Tiles: " + needed_tiles)
+                # print("Current_board_ltr: " + str(current_board_ltr) + ", Word: " + self.word + ", Needed_Tiles: " + needed_tiles)
                 return "Please connect the word to a previously played letter."
 
             #Raises an error if the player does not have the correct tiles to play the word.
@@ -343,12 +346,14 @@ class Word:
                 return "The first turn must begin at location (7, 7).\n"
 
             # Check that new words formed that are attached to the word played are real
-            attached_words, x  = self.get_attached_words(True)
+            attached_words, board_squares  = self.get_attached_words(True)
             for word_info in attached_words:
-                word = ''.join(word_info['word'])
+                word = '\n' + ''.join(word_info['word']) + '\n'
                 if word not in dictionary:
                     return 'invalid word attached'
             
+            self.attached_words = attached_words
+            self.board_squares = board_squares
             return True
 
         #If the user IS skipping the turn, confirm. If the user replies with "Y", skip the player's turn. Otherwise, allow the user to enter another word.
@@ -449,16 +454,14 @@ class Word:
         return self.get_other_words(start, stat, end, board, played_ltrs, spell_check), squares
     
     # calculate the score of the word being played, as well as words that are attached
-    def calculate_word_score(self, add_score):
+    def calculate_word_score(self):
         global LETTER_VALUES
         word_score = 0
         total_score = 0
         word_mult = 0
-        squares = []
         board_ltrs = []
-        attached_words, squares = self.get_attached_words(False)
 
-        for word in attached_words:
+        for word in self.attached_words:
             for ltr in word['ltr']:
                 word['score'] += LETTER_VALUES[ltr]
             word['score'] *= word['multiplier']
@@ -469,26 +472,31 @@ class Word:
             word_mult = 2
 
         for i in range(len(self.word)):
-            if len(squares[i][0].strip()) == 1 and squares[i][1] != '*':
-                board_ltrs.append(squares[i][1])
+            if len(self.board_squares[i][0].strip()) == 1 and self.board_squares[i][1] != '*':
+                board_ltrs.append(self.board_squares[i][1])
                 pass
-            elif squares[i] == "TLS":
+            elif self.board_squares[i] == "TLS":
                 word_score += LETTER_VALUES[self.word[i]] * 3
-            elif squares[i] == "DLS":
+            elif self.board_squares[i] == "DLS":
                 word_score += LETTER_VALUES[self.word[i]] * 2
-            elif squares[i] == "DWS":
+            elif self.board_squares[i] == "DWS":
                 word_mult *= 2
-            elif squares[i] == "TWS":
+            elif self.board_squares[i] == "TWS":
                 word_mult *= 3
             else:
                 word_score += LETTER_VALUES[self.word[i]]
         if word_mult != 0:
             word_score *= word_mult
         total_score += word_score
-        if add_score:
-            self.player.increase_score(total_score)
-        else:
-            return total_score
+
+        if len(self.word) - len(board_ltrs) == 7:
+            total_score += 50
+
+        self.score = total_score
+        return total_score
+
+    def add_score(self):
+        self.player.increase_score(self.score)
 
     def set_word(self, word):
         self.word = word
@@ -551,7 +559,7 @@ class Game:
     def bot_turn(self, player):
         print('bot turn')
         word_to_play = word_rank(self.players[player].get_rack_str(), self.get_board_data(), self.round_number, self.players, player)
-        self.player_turn(word_to_play.word, word_to_play.location[1], word_to_play.location[0], word_to_play.direction)
+        self.player_turn(word_to_play)
 
     def is_ended(self):
         player = self.players[self.current_player]
@@ -567,30 +575,17 @@ class Game:
 
 
     # word [type string], col/row [type num], direction [r or d]
-    def player_turn(self, word_to_play, col, row, direction):
+    def player_turn(self, word_to_play):
         player = self.players[self.current_player]
-        #Code added to let BESSIE pick a word to play 
-        location = []
-        if (col > 14 or col < 0) or (row > 14 or row < 0):
-            location = [-1, -1]
-        else:
-            location = [row, col]
-
-        word = Word(word_to_play, location, player, direction, self.board.board_array())
-
-        # return error, ask user to play different word
-        word_valid = word.check_word(self.round_number, self.players)
-        if (word_valid != True):
-            return word_valid
 
         #If the user has confirmed that they would like to skip their turn, skip it.
         #Otherwise, plays the correct word and prints the board.
-        if word.get_word() == "":
+        if word_to_play.word == "":
             print("Your turn has been skipped.")
             self.skipped_turns += 1
         else:
-            word.calculate_word_score(True)
-            self.board.place_word(word_to_play, location, direction, player, self.bag)
+            word_to_play.add_score()
+            self.board.place_word(word_to_play.word, word_to_play.location, word_to_play.direction, player, self.bag)
             self.skipped_turns = 0
 
         #Gets the next player.

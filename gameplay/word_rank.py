@@ -70,7 +70,7 @@ def get_top_words(playable, board, rack, players, player, round_number):
             word_obj = get_word(word, info, board, players[player])
             check = word_obj.check_word(round_number, players)
             if check == True:
-                score = word_obj.calculate_word_score(False)
+                score = word_obj.calculate_word_score()
                 scored.append({'word': word_obj, 'score': score})
     return sorted(scored, key=lambda k: k['score'], reverse=True)
 
