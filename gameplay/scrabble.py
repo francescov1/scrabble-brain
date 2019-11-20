@@ -105,7 +105,7 @@ class Bag:
         self.add_to_bag(Tile("X", LETTER_VALUES), 1)
         self.add_to_bag(Tile("Y", LETTER_VALUES), 2)
         self.add_to_bag(Tile("Z", LETTER_VALUES), 1)
-        self.add_to_bag(Tile("#", LETTER_VALUES), 2)
+        # self.add_to_bag(Tile("#", LETTER_VALUES), 2)
         shuffle(self.bag)
 
     def take_from_bag(self):
@@ -471,7 +471,6 @@ class Word:
         end = start + len(self.word) -1
         if end > 14 or end < 0 or loc[0] < 0  or loc[0] > 14 or loc[1] < 0 or loc[1] > 14:
             return 0 # change to invalid
-
         played_ltrs, squares = self.get_played_tiles(board)   
         return self.get_other_words(start, stat, end, board, played_ltrs, spell_check), squares
     
