@@ -594,6 +594,7 @@ class Game:
         word_to_play = word_rank(self.players[player].get_rack_str(), self.get_board_data(), self.round_number, self.players, player)
         output = word_to_play.format_output(self.players[player].get_rack_str())
         self.player_turn(word_to_play.word, word_to_play.location[0], word_to_play.location[1], word_to_play.direction)
+        return output
 
     def is_ended(self):
         player = self.players[self.current_player]
