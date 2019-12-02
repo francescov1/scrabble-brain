@@ -2,14 +2,14 @@ from itertools import combinations
 from bisect import bisect_left
 from word_position import word_position
 import scrabble
-import time
+from multiprocess import Pool
 
 # TODO incorperate blank tiles, randomly breaks probably should look into that
 # look into fixing error that happens when a space is in the word
 
 # Load words from the anagram text file
 def load_vars():
-    f = open("C:\\Users\\Laura\\Documents\\University\\5th Year Eng\\ENPH 454\\ScrabbleBot\\scrabble-brain\\gameplay\\anadict.txt", 'r')
+    f = open("anadict.txt", 'r')
     ana_dict = f.read().split('\n')
     f.close()
     return ana_dict
@@ -52,6 +52,25 @@ def get_word(word, word_info, board, player):
         elif word_info['direction'] == 'd':
             row = row - len(ltr_split[0])
     return scrabble.Word(word, [row, col], player, word_info['direction'], board)
+
+def get_words_to_play(info):
+# Check to see if it is the first turn (no board letters to play around)
+    # if board[7][7] == ' * ':
+    #     board_ltr = ''
+    # else:
+    #     board_ltr = ''.join(info['letters']).lower().strip()
+    # found_words = set(find_words(rack, ana_dict, board_ltr))
+    # # put word objects
+    # for word in found_words:
+    #     word_obj = get_word(word, info, board, players[player])
+    #     check = word_obj.check_word(round_number, players)
+    #     if check == True:
+    #         score = word_obj.calculate_word_score()
+    # return {'word': word_obj, 'score': score}
+    return info
+
+
+
 
 #  Find list of playable words given a list of valid positions
 #  returns list of words sorted by highest score

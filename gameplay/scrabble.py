@@ -280,7 +280,7 @@ class Word:
         #Also controls the overlapping of words.
 
         word_score = 0
-        dictionary = open('C:\\Users\\Laura\\Documents\\University\\5th Year Eng\\ENPH 454\\ScrabbleBot\\scrabble-brain\\gameplay\\dic.txt').read()
+        dictionary = open('dic.txt').read()
 
         current_board_ltr = ""
         needed_tiles = ""
