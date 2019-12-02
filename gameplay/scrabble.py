@@ -279,7 +279,7 @@ class Word:
         #Checks the word to make sure that it is in the dictionary, and that the location falls within bounds.
         #Also controls the overlapping of words.
 
-        dictionary = open('C:\\Users\\Laura\\Documents\\University\\5th Year Eng\\ENPH 454\\ScrabbleBot\\scrabble-brain\\gameplay\\dic.txt').read()
+        dictionary = open('dic.txt').read()
 
         current_board_ltr = ""
         needed_tiles = ""
@@ -520,6 +520,22 @@ class Word:
         self.score = total_score
         return total_score
 
+    def format_output(self, rack):
+        moves = []
+        rack = rack.split(", ").copy()
+        row = self.location[0]
+        col = self.location[1]
+        for i in range(len(self.word)):
+            if self.direction == 'r':
+                col = self.location[1] + i
+            else:
+                row = self.location[0] + i
+            if len(self.board_squares[i].strip()) != 1:
+                rack_pos = rack.index(self.word[i])
+                rack[rack_pos] = ''
+                moves.append({'ltr': self.word[i], 'rack_pos': rack_pos, 'board_pos': [row, col]})
+        return moves
+
     def add_score(self):
         self.player.increase_score(self.score)
 
@@ -584,6 +600,7 @@ class Game:
     def bot_turn(self, player):
         print('bot turn')
         word_to_play = word_rank(self.players[player].get_rack_str(), self.get_board_data(), self.round_number, self.players, player)
+        output = word_to_play.format_output(self.players[player].get_rack_str())
         self.player_turn(word_to_play.word, word_to_play.location[0], word_to_play.location[1], word_to_play.direction)
 
     def is_ended(self):
