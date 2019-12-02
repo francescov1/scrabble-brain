@@ -17,13 +17,10 @@ game.print_game()
 while(not game.is_ended()):
 
     (word_to_play, col, row, direction) = get_player_input()
-
-    game.player_turn(word_to_play, col, row, direction)
+    game.player_turn(word_to_play, row, col, direction)
     game.print_game()
 
-    #game.bot_turn() # TODO: switch this for lines below when bot logic done
-    (word_to_play, col, row, direction) = get_player_input()
-    game.player_turn(word_to_play, col, row, direction)
+    game.bot_turn(1) 
 
     game.print_game()
 

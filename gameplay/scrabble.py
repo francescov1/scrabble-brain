@@ -1,4 +1,5 @@
 from random import shuffle
+from word_rank import word_rank
 
 """
 Scrabble Game
@@ -19,7 +20,7 @@ LETTER_VALUES = {"A": 1,
                  "G": 2,
                  "H": 4,
                  "I": 1,
-                 "J": 1,
+                 "J": 8,
                  "K": 5,
                  "L": 1,
                  "M": 3,
@@ -87,7 +88,7 @@ class Bag:
         self.add_to_bag(Tile("G", LETTER_VALUES), 3)
         self.add_to_bag(Tile("H", LETTER_VALUES), 2)
         self.add_to_bag(Tile("I", LETTER_VALUES), 9)
-        self.add_to_bag(Tile("J", LETTER_VALUES), 9)
+        self.add_to_bag(Tile("J", LETTER_VALUES), 1)
         self.add_to_bag(Tile("K", LETTER_VALUES), 1)
         self.add_to_bag(Tile("L", LETTER_VALUES), 4)
         self.add_to_bag(Tile("M", LETTER_VALUES), 2)
@@ -104,7 +105,7 @@ class Bag:
         self.add_to_bag(Tile("X", LETTER_VALUES), 1)
         self.add_to_bag(Tile("Y", LETTER_VALUES), 2)
         self.add_to_bag(Tile("Z", LETTER_VALUES), 1)
-        self.add_to_bag(Tile("#", LETTER_VALUES), 2)
+        # self.add_to_bag(Tile("#", LETTER_VALUES), 2)
         shuffle(self.bag)
 
     def take_from_bag(self):
@@ -248,8 +249,8 @@ class Board:
         #Places the word going downwards
         elif direction.lower() == "d":
             for i in range(len(word)):
-                if self.board[location[0]][location[1]+i] != "   ":
-                    premium_spots.append((word[i], self.board[location[0]][location[1]+i]))
+                if self.board[location[0]+i][location[1]] != "   ":
+                    premium_spots.append((word[i], self.board[location[0]+i][location[1]]))
                 self.board[location[0]+i][location[1]] = " " + word[i] + " "
 
         #Removes tiles from player's rack and replaces them with tiles from the bag.
@@ -270,13 +271,15 @@ class Word:
         self.player = player
         self.direction = direction.lower()
         self.board = board
+        self.attached_words = []
+        self.score = 0
+        self.board_squares = []
 
     def check_word(self, round_number, players):
         #Checks the word to make sure that it is in the dictionary, and that the location falls within bounds.
         #Also controls the overlapping of words.
 
-        word_score = 0
-        dictionary = open("dic.txt").read()
+        dictionary = open('dic.txt').read()
 
         current_board_ltr = ""
         needed_tiles = ""
@@ -284,21 +287,47 @@ class Word:
 
         #Assuming that the player is not skipping the turn:
         if self.word != "":
+            
+            #Raises an error if the location of the word will be out of bounds.
+            if self.location[0] > 14 or self.location[1] > 14 or self.location[0] < 0 or self.location[1] < 0 or (self.direction == "d" and (self.location[0]+len(self.word)-1) > 14) or (self.direction == "r" and (self.location[1]+len(self.word)-1) > 14):
+                return False
 
+            # TODO Fix blank tile function and program the bot to use them
             #Allows for players to declare the value of a blank tile.
             if "#" in self.word:
                 while len(blank_tile_val) != 1:
                     blank_tile_val = input("Please enter the letter value of the blank tile: ")
-                self.word = self.word[:word.index("#")] + blank_tile_val.upper() + self.word[(word.index("#")+1):]
+                self.word = self.word[:self.word.index("#")] + blank_tile_val.upper() + self.word[(self.word.index("#")+1):]
 
             #Reads in the board's current values under where the word that is being played will go. Raises an error if the direction is not valid.
             if self.direction == "r":
+                # Check for adjacent letters and add them to the word
+                board_row = self.board[self.location[0]]
+                col = self.location[1]
+                end_ltrs = self.get_letters(board_row, col + len(self.word))
+                start_ltrs = self.get_letters(board_row[::-1], 15 - col)
+                if len(end_ltrs) > 0:
+                    self.word = self.word + ''.join(end_ltrs)
+                if len(start_ltrs) > 0:
+                    self.word = ''.join(start_ltrs[::-1]) + self.word
+                    self.location[1] -= len(self.word)
+
                 for i in range(len(self.word)):
                     if self.board[self.location[0]][self.location[1]+i][1] == " " or self.board[self.location[0]][self.location[1]+i] == "TLS" or self.board[self.location[0]][self.location[1]+i] == "TWS" or self.board[self.location[0]][self.location[1]+i] == "DLS" or self.board[self.location[0]][self.location[1]+i] == "DWS" or self.board[self.location[0]][self.location[1]+i][1] == "*":
                         current_board_ltr += " "
                     else:
                         current_board_ltr += self.board[self.location[0]][self.location[1]+i][1]
             elif self.direction == "d":
+                board_col = [x[self.location[1]] for x in self.board]
+                row = self.location[0]
+                end_ltrs = self.get_letters(board_col, row + len(self.word))
+                start_ltrs = self.get_letters(board_col[::-1], 15 - row)
+                if len(end_ltrs) > 0:
+                    self.word = self.word + ''.join(end_ltrs)
+                if len(start_ltrs) > 0:
+                    self.word = ''.join(start_ltrs[::-1]) + self.word
+                    self.location[0] -= len(self.word)
+
                 for i in range(len(self.word)):
                     if self.board[self.location[0]+i][self.location[1]] == "   " or self.board[self.location[0]+i][self.location[1]] == "TLS" or self.board[self.location[0]+i][self.location[1]] == "TWS" or self.board[self.location[0]+i][self.location[1]] == "DLS" or self.board[self.location[0]+i][self.location[1]] == "DWS" or self.board[self.location[0]+i][self.location[1]] == " * ":
                         current_board_ltr += " "
@@ -308,7 +337,7 @@ class Word:
                 return "Error: please enter a valid direction."
 
             #Raises an error if the word being played is not in the official scrabble dictionary (dic.txt).
-            if self.word not in dictionary:
+            if '\n' + self.word + '\n' not in dictionary:
                 return "Please enter a valid dictionary word.\n"
 
             #Ensures that the words overlap correctly. If there are conflicting letters between the current board and the word being played, raises an error.
@@ -316,7 +345,7 @@ class Word:
                 if current_board_ltr[i] == " ":
                     needed_tiles += self.word[i]
                 elif current_board_ltr[i] != self.word[i]:
-                    print("Current_board_ltr: " + str(current_board_ltr) + ", Word: " + self.word + ", Needed_Tiles: " + needed_tiles)
+                    # print("Current_board_ltr: " + str(current_board_ltr) + ", Word: " + self.word + ", Needed_Tiles: " + needed_tiles)
                     return "The letters do not overlap correctly, please choose another word."
 
             #If there is a blank tile, remove it's given value from the tiles needed to play the word.
@@ -325,7 +354,7 @@ class Word:
 
             #Ensures that the word will be connected to other words on the playing board.
             if (round_number != 1 or (round_number == 1 and players[0] != self.player)) and current_board_ltr == " " * len(self.word):
-                print("Current_board_ltr: " + str(current_board_ltr) + ", Word: " + self.word + ", Needed_Tiles: " + needed_tiles)
+                # print("Current_board_ltr: " + str(current_board_ltr) + ", Word: " + self.word + ", Needed_Tiles: " + needed_tiles)
                 return "Please connect the word to a previously played letter."
 
             #Raises an error if the player does not have the correct tiles to play the word.
@@ -333,13 +362,19 @@ class Word:
                 if letter not in self.player.get_rack_str() or self.player.get_rack_str().count(letter) < needed_tiles.count(letter):
                     return "You do not have the tiles for this word\n"
 
-            #Raises an error if the location of the word will be out of bounds.
-            if self.location[0] > 14 or self.location[1] > 14 or self.location[0] < 0 or self.location[1] < 0 or (self.direction == "d" and (self.location[0]+len(self.word)-1) > 14) or (self.direction == "r" and (self.location[1]+len(self.word)-1) > 14):
-                return "Location out of bounds.\n"
-
             #Ensures that first turn of the game will have the word placed at (7,7).
             if round_number == 1 and players[0] == self.player and self.location != [7,7]:
                 return "The first turn must begin at location (7, 7).\n"
+
+            # Check that new words formed that are attached to the word played are real
+            attached_words, board_squares  = self.get_attached_words()
+            for word_info in attached_words:
+                word = '\n' + ''.join(word_info['word']) + '\n'
+                if word not in dictionary:
+                    return 'invalid word attached'
+            
+            self.attached_words = attached_words
+            self.board_squares = board_squares
             return True
 
         #If the user IS skipping the turn, confirm. If the user replies with "Y", skip the player's turn. Otherwise, allow the user to enter another word.
@@ -349,25 +384,160 @@ class Word:
             else:
                 return "Please enter a word."
 
+    # get letters that are apart of the attached word
+    def get_letters(self, word_col, row):
+        word = []
+        space = False
+        while not space and row >= 0 and row < 15:
+            if len(word_col[row].strip()) == 1:
+                word.append(word_col[row].strip())
+                row += 1 
+            else:
+                space = True
+        return word
+
+    # Get the score for the word that is attached to the played word
+    def format_word(self, col, row, board, ltr):
+        word_col = [x[col] for x in board]
+        word_end = self.get_letters(word_col, row + 1)
+        word_start = self.get_letters(word_col[::-1], 15 - row)
+        word = word_start[::-1] + [ltr] + word_end
+        return word
+
+    # check the spaces on both sides of the word for letters
+    def get_other_words(self, start, row, end, board, played_ltrs):
+        global LETTER_VALUES
+        words = []
+        for square in played_ltrs:
+            if self.direction == 'r':
+                col = square['col']
+            else:
+                col = square['row']
+            ltr_after = self.is_letter(board, row + 1, col)
+            ltr_before = self.is_letter(board, row - 1, col)
+            if ltr_after or ltr_before:
+                word = self.format_word(col, row, board, square['ltr'])
+                words.append({'word': word, 'ltr': square['ltr'], 'ltr_indx': [row, col], 'score': 0})
+        return words
+
+    #check if there is a letter on the square
+    def is_letter(self, board, row, i):
+        try:
+            space = board[row][i].strip()
+            is_ltr = len(space) == 1
+        except IndexError:
+            is_ltr = False
+        return is_ltr
+
+    def get_played_tiles(self, board):
+        player_ltrs = []
+        squares = []
+        loc = self.location
+        if self.direction == 'r':
+            end = loc[1] + len(self.word) - 1
+            squares = board[loc[0]][loc[1]:end + 1]
+        else:
+            end = loc[0] + len(self.word) - 1
+            squares = board[loc[1]][loc[0]: end + 1]
+        for i in range(len(squares)):
+            if len(squares[i].strip()) == 1 and squares[i].strip() != "*":
+                pass
+            else:
+                if self.direction == 'r':
+                    player_ltrs.append({'ltr': self.word[i], 'row': loc[0], 'col': loc[1] + i, 'score': 0})
+                else:
+                    player_ltrs.append({'ltr': self.word[i], 'row': loc[0] + i, 'col': loc[1], 'score': 0})
+        return player_ltrs, squares
+
+    def get_attached_words(self):
+        loc = self.location
+        if self.direction == 'r':
+            stat = loc[0]
+            start = loc[1]
+            board = self.board
+        else:
+            stat = loc[1]
+            start = loc[0]
+            board = [list(i) for i in zip(*self.board)]
+        end = start + len(self.word) -1
+        if end > 14 or end < 0 or loc[0] < 0  or loc[0] > 14 or loc[1] < 0 or loc[1] > 14:
+            return 0 # change to invalid
+        played_ltrs, squares = self.get_played_tiles(board)   
+        return self.get_other_words(start, stat, end, board, played_ltrs), squares
+    
+    # calculate the score of the word being played, as well as words that are attached
     def calculate_word_score(self):
-        #Calculates the score of a word, allowing for the impact by premium squares.
-        global LETTER_VALUES, premium_spots
-        premium_spots = []
+        self.score = 0
+        global LETTER_VALUES
         word_score = 0
-        for letter in self.word:
-            for spot in premium_spots:
-                if letter == spot[0]:
-                    if spot[1] == "TLS":
-                        word_score += LETTER_VALUES[letter] * 2
-                    elif spot[2] == "DLS":
-                        word_score += LETTER_VALUES[letter]
-            word_score += LETTER_VALUES[letter]
-        for spot in premium_spots:
-            if spot[1] == "TWS":
-                word_score *= 3
-            elif spot[1] == "DWS":
-                word_score *= 2
-        self.player.increase_score(word_score)
+        total_score = 0
+        word_mult = 1
+        board_ltrs = []
+
+        for word in self.attached_words:
+            row = word['ltr_indx'][0]
+            col = word['ltr_indx'][1]
+            ltr_sqr = self.board[row][col]
+            for ltr in word['word']:
+                word['score'] += LETTER_VALUES[ltr]
+            if ltr_sqr == "TLS":
+                word['score']+= LETTER_VALUES[word['ltr']] * 2
+            elif ltr_sqr == "DLS":
+                word['score'] += LETTER_VALUES[word['ltr']]
+
+            if ltr_sqr == "DWS":
+                word['score'] *= 2
+            elif ltr_sqr == "TWS":
+                word['score'] *= 3
+            total_score += word['score']
+        
+
+        # calculate the score of the word being played
+        if self.location == [7,7] and self.board[7][7][1] == '*':
+            word_mult = 2
+
+        for i in range(len(self.word)):
+            if len(self.board_squares[i].strip()) == 1 and self.board_squares[i][1] != '*':
+                board_ltrs.append(self.board_squares[i][1])
+            if self.board_squares[i] == "TLS":
+                word_score += LETTER_VALUES[self.word[i]] * 3
+            elif self.board_squares[i] == "DLS":
+                word_score += LETTER_VALUES[self.word[i]] * 2
+            else:
+                word_score += LETTER_VALUES[self.word[i]]
+            if self.board_squares[i] == "DWS":
+                word_mult *= 2
+            elif self.board_squares[i] == "TWS":
+                word_mult *= 3
+
+        word_score *= word_mult
+        total_score += word_score
+
+        #fix
+        if len(self.word) - len(board_ltrs) == 7:
+            total_score += 50
+
+        self.score = total_score
+        return total_score
+
+    def format_output(self, rack):
+        moves = []
+        rack = rack.split(", ").copy()
+        row = self.location[0]
+        col = self.location[1]
+        for i in range(len(self.word)):
+            if self.direction == 'r':
+                col = self.location[1] + i
+            else:
+                row = self.location[0] + i
+            if len(self.board_squares[i].strip()) != 1:
+                rack_pos = rack.index(self.word[i])
+                rack[rack_pos] = ''
+                moves.append({'ltr': self.word[i], 'rack_pos': rack_pos, 'board_pos': [row, col]})
+        return moves
+
+    def add_score(self):
+        self.player.increase_score(self.score)
 
     def set_word(self, word):
         self.word = word
@@ -396,6 +566,18 @@ class Game:
         players[1].set_name("Bot")
         self.players = players
         self.current_player = 0
+        
+    def get_word_played(self, new_board):
+        # if one letter found, need to figure out which direction word is going
+        # if multiple letters, we know the direction
+        old_board = self.board.board_array()
+        for (i, row) in enumerate(old_board):
+            for (j, letter) in enumerate(row):
+                letter = letter.strip()
+                if letter != new_board[i,j]:
+                    # new letter
+                    print("new letter \"" + letter + "\" at [" + str(i) + ", " + str(j) + "]")
+                    #TODO: report new word
 
     def print_game(self):
         players = self.players
@@ -415,9 +597,11 @@ class Game:
     def get_board_data(self):
         return self.board.board_array()
 
-    # TODO
-    def bot_turn(self):
+    def bot_turn(self, player):
         print('bot turn')
+        word_to_play = word_rank(self.players[player].get_rack_str(), self.get_board_data(), self.round_number, self.players, player)
+        output = word_to_play.format_output(self.players[player].get_rack_str())
+        self.player_turn(word_to_play.word, word_to_play.location[0], word_to_play.location[1], word_to_play.direction)
 
     def is_ended(self):
         player = self.players[self.current_player]
@@ -431,11 +615,12 @@ class Game:
         else:
             return True
 
-    # word [type string], col/row [type num], direction [r or d]
-    def player_turn(self, word_to_play, col, row, direction):
-        player = self.players[self.current_player]
-        location = []
 
+    # word [type string], col/row [type num], direction [r or d]
+    def player_turn(self, word_to_play, row, col, direction):
+        player = self.players[self.current_player]
+        #Code added to let BESSIE pick a word to play 
+        location = []
         if (col > 14 or col < 0) or (row > 14 or row < 0):
             location = [-1, -1]
         else:
@@ -446,7 +631,8 @@ class Game:
         # return error, ask user to play different word
         word_valid = word.check_word(self.round_number, self.players)
         if (word_valid != True):
-            return word_valid
+            print('INVALID WORD')
+            return
 
         #If the user has confirmed that they would like to skip their turn, skip it.
         #Otherwise, plays the correct word and prints the board.
@@ -454,8 +640,9 @@ class Game:
             print("Your turn has been skipped.")
             self.skipped_turns += 1
         else:
-            self.board.place_word(word_to_play, location, direction, player, self.bag)
             word.calculate_word_score()
+            word.add_score()
+            self.board.place_word(word_to_play, location, direction, player, self.bag)
             self.skipped_turns = 0
 
         #Gets the next player.
