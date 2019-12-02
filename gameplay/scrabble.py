@@ -120,12 +120,11 @@ class Rack:
     """
     Creates each player's 'dock', or 'hand'. Allows players to add, remove and replenish the number of tiles in their hand.
     """
-    def __init__(self, bag):
+    def __init__(self, rack):
         #Initializes the player's rack/hand. Takes the bag from which the racks tiles will come as an argument.
-        self.rack = []
+        self.rack = rack
         #self.bag = bag
         #self.initialize()
-        self.initialize(bag)
 
     def add_to_rack(self, bag):
         #Takes a tile from the bag and adds it to the player's rack.
@@ -138,7 +137,7 @@ class Rack:
 
     def get_rack_str(self):
         #Displays the user's rack in string form.
-        return ", ".join(str(item.get_letter()) for item in self.rack)
+        return "".join(self.rack)
 
     def get_rack_arr(self):
         #Returns the rack as an array of tile instances
@@ -161,11 +160,11 @@ class Player:
     """
     Creates an instance of a player. Initializes the player's rack, and allows you to set/get a player name.
     """
-    def __init__(self, bag):
+    def __init__(self, bag, rack):
         #Intializes a player instance. Creates the player's rack by creating an instance of that class.
         #Takes the bag as an argument, in order to create the rack.
         self.name = ""
-        self.rack = Rack(bag)
+        self.rack = rack
         self.score = 0
 
     def set_name(self, name):
@@ -252,13 +251,6 @@ class Board:
                 if self.board[location[0]+i][location[1]] != "   ":
                     premium_spots.append((word[i], self.board[location[0]+i][location[1]]))
                 self.board[location[0]+i][location[1]] = " " + word[i] + " "
-
-        #Removes tiles from player's rack and replaces them with tiles from the bag.
-        for letter in word:
-            for tile in player.get_rack_arr():
-                if tile.get_letter() == letter:
-                    player.rack.remove_from_rack(tile)
-        player.rack.replenish_rack(bag)
 
     def board_array(self):
         #Returns the 2-dimensional board array.
@@ -522,7 +514,7 @@ class Word:
 
     def format_output(self, rack):
         moves = []
-        rack = rack.split(", ").copy()
+        rack = [char.upper() for char in rack]
         row = self.location[0]
         col = self.location[1]
         for i in range(len(self.word)):
@@ -555,13 +547,13 @@ class Game:
     """
     Creates an instance of a game. Initializes the board and players
     """
-    def __init__(self, player_name):
-        self.board = Board()
+    def __init__(self, player_name, rack, board):
+        self.board = board
         self.bag = Bag()
-        self.round_number = 1
+        self.round_number = 4
         self.skipped_turns = 0
 
-        players = [Player(self.bag), Player(self.bag)]
+        players = [Player(self.bag, rack), Player(self.bag, rack)]
         players[0].set_name(player_name)
         players[1].set_name("Bot")
         self.players = players
@@ -597,7 +589,7 @@ class Game:
     def get_board_data(self):
         return self.board.board_array()
 
-    def bot_turn(self, player):
+    def bot_turn(self, player, rack):
         print('bot turn')
         word_to_play = word_rank(self.players[player].get_rack_str(), self.get_board_data(), self.round_number, self.players, player)
         output = word_to_play.format_output(self.players[player].get_rack_str())
