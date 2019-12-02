@@ -279,7 +279,7 @@ class Word:
         #Checks the word to make sure that it is in the dictionary, and that the location falls within bounds.
         #Also controls the overlapping of words.
 
-        dictionary = open('dic.txt').read()
+        dictionary = open('C:\\Users\\Laura\\Documents\\University\\5th Year Eng\\ENPH 454\\ScrabbleBot\\scrabble-brain\\gameplay\\dic.txt').read()
 
         current_board_ltr = ""
         needed_tiles = ""
@@ -584,7 +584,7 @@ class Game:
     def bot_turn(self, player):
         print('bot turn')
         word_to_play = word_rank(self.players[player].get_rack_str(), self.get_board_data(), self.round_number, self.players, player)
-        self.player_turn(word_to_play)
+        self.player_turn(word_to_play.word, word_to_play.location[0], word_to_play.location[1], word_to_play.direction)
 
     def is_ended(self):
         player = self.players[self.current_player]
@@ -600,17 +600,32 @@ class Game:
 
 
     # word [type string], col/row [type num], direction [r or d]
-    def player_turn(self, word_to_play):
+    def player_turn(self, word_to_play, row, col, direction):
         player = self.players[self.current_player]
+        #Code added to let BESSIE pick a word to play 
+        location = []
+        if (col > 14 or col < 0) or (row > 14 or row < 0):
+            location = [-1, -1]
+        else:
+            location = [row, col]
+
+        word = Word(word_to_play, location, player, direction, self.board.board_array())
+
+        # return error, ask user to play different word
+        word_valid = word.check_word(self.round_number, self.players)
+        if (word_valid != True):
+            print('INVALID WORD')
+            return
 
         #If the user has confirmed that they would like to skip their turn, skip it.
         #Otherwise, plays the correct word and prints the board.
-        if word_to_play.word == "":
+        if word.get_word() == "":
             print("Your turn has been skipped.")
             self.skipped_turns += 1
         else:
-            word_to_play.add_score()
-            self.board.place_word(word_to_play.word, word_to_play.location, word_to_play.direction, player, self.bag)
+            word.calculate_word_score()
+            word.add_score()
+            self.board.place_word(word_to_play, location, direction, player, self.bag)
             self.skipped_turns = 0
 
         #Gets the next player.

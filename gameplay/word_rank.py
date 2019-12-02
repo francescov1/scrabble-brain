@@ -7,7 +7,7 @@ import scrabble
 
 # Load words from the anagram text file
 def load_vars():
-    f = open("anadict.txt", 'r')
+    f = open("C:\\Users\\Laura\\Documents\\University\\5th Year Eng\\ENPH 454\\ScrabbleBot\\scrabble-brain\\gameplay\\anadict.txt", 'r')
     ana_dict = f.read().split('\n')
     f.close()
     return ana_dict
@@ -79,5 +79,6 @@ def word_rank(rack, board, round_number, players, player):
     mod_rack = [x.lower() for x in mod_rack]
     playable = word_position(board)
     scored = get_top_words(playable, board, mod_rack, players, player, round_number)
+    # Take out after debug
     scored[0]['word'].calculate_word_score()
     return scored[0]['word']
