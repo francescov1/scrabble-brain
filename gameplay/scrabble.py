@@ -279,7 +279,6 @@ class Word:
         #Checks the word to make sure that it is in the dictionary, and that the location falls within bounds.
         #Also controls the overlapping of words.
 
-        word_score = 0
         dictionary = open('dic.txt').read()
 
         current_board_ltr = ""
@@ -368,7 +367,7 @@ class Word:
                 return "The first turn must begin at location (7, 7).\n"
 
             # Check that new words formed that are attached to the word played are real
-            attached_words, board_squares  = self.get_attached_words(True)
+            attached_words, board_squares  = self.get_attached_words()
             for word_info in attached_words:
                 word = '\n' + ''.join(word_info['word']) + '\n'
                 if word not in dictionary:
@@ -398,23 +397,15 @@ class Word:
         return word
 
     # Get the score for the word that is attached to the played word
-    def ltr_search(self, col, row, board, ltr, spell_check):
-        word_mult = 1
+    def format_word(self, col, row, board, ltr):
         word_col = [x[col] for x in board]
         word_end = self.get_letters(word_col, row + 1)
         word_start = self.get_letters(word_col[::-1], 15 - row)
-        if spell_check:
-            word = word_start[::-1] + [ltr] + word_end
-        else:
-            word = word_start + word_end
-            if word_col[row] == 'DWS':
-                word_mult = 2
-            elif word_col[row] == 'TWS':
-                word_mult = 3
-        return word, word_mult
+        word = word_start[::-1] + [ltr] + word_end
+        return word
 
     # check the spaces on both sides of the word for letters
-    def get_other_words(self, start, row, end, board, played_ltrs, spell_check):
+    def get_other_words(self, start, row, end, board, played_ltrs):
         global LETTER_VALUES
         words = []
         for square in played_ltrs:
@@ -425,8 +416,8 @@ class Word:
             ltr_after = self.is_letter(board, row + 1, col)
             ltr_before = self.is_letter(board, row - 1, col)
             if ltr_after or ltr_before:
-                word, word_mult = self.ltr_search(col, row, board, square['ltr'], spell_check)
-                words.append({'word': word, 'ltr': square['ltr'], 'ltr_indx': [row, col], 'score': 0, 'multiplier': word_mult})
+                word = self.format_word(col, row, board, square['ltr'])
+                words.append({'word': word, 'ltr': square['ltr'], 'ltr_indx': [row, col], 'score': 0})
         return words
 
     #check if there is a letter on the square
@@ -458,7 +449,7 @@ class Word:
                     player_ltrs.append({'ltr': self.word[i], 'row': loc[0] + i, 'col': loc[1], 'score': 0})
         return player_ltrs, squares
 
-    def get_attached_words(self, spell_check):
+    def get_attached_words(self):
         loc = self.location
         if self.direction == 'r':
             stat = loc[0]
@@ -472,44 +463,57 @@ class Word:
         if end > 14 or end < 0 or loc[0] < 0  or loc[0] > 14 or loc[1] < 0 or loc[1] > 14:
             return 0 # change to invalid
         played_ltrs, squares = self.get_played_tiles(board)   
-        return self.get_other_words(start, stat, end, board, played_ltrs, spell_check), squares
+        return self.get_other_words(start, stat, end, board, played_ltrs), squares
     
     # calculate the score of the word being played, as well as words that are attached
     def calculate_word_score(self):
+        self.score = 0
         global LETTER_VALUES
         word_score = 0
         total_score = 0
-        word_mult = 0
+        word_mult = 1
         board_ltrs = []
 
         for word in self.attached_words:
-            for ltr in word['ltr']:
+            row = word['ltr_indx'][0]
+            col = word['ltr_indx'][1]
+            ltr_sqr = self.board[row][col]
+            for ltr in word['word']:
                 word['score'] += LETTER_VALUES[ltr]
-            word['score'] *= word['multiplier']
+            if ltr_sqr == "TLS":
+                word['score']+= LETTER_VALUES[word['ltr']] * 2
+            elif ltr_sqr == "DLS":
+                word['score'] += LETTER_VALUES[word['ltr']]
+
+            if ltr_sqr == "DWS":
+                word['score'] *= 2
+            elif ltr_sqr == "TWS":
+                word['score'] *= 3
             total_score += word['score']
+        
 
         # calculate the score of the word being played
         if self.location == [7,7] and self.board[7][7][1] == '*':
             word_mult = 2
 
         for i in range(len(self.word)):
-            if len(self.board_squares[i][0].strip()) == 1 and self.board_squares[i][1] != '*':
+            if len(self.board_squares[i].strip()) == 1 and self.board_squares[i][1] != '*':
                 board_ltrs.append(self.board_squares[i][1])
-                pass
-            elif self.board_squares[i] == "TLS":
+            if self.board_squares[i] == "TLS":
                 word_score += LETTER_VALUES[self.word[i]] * 3
             elif self.board_squares[i] == "DLS":
                 word_score += LETTER_VALUES[self.word[i]] * 2
-            elif self.board_squares[i] == "DWS":
+            else:
+                word_score += LETTER_VALUES[self.word[i]]
+            if self.board_squares[i] == "DWS":
                 word_mult *= 2
             elif self.board_squares[i] == "TWS":
                 word_mult *= 3
-            else:
-                word_score += LETTER_VALUES[self.word[i]]
-        if word_mult != 0:
-            word_score *= word_mult
+
+        word_score *= word_mult
         total_score += word_score
 
+        #fix
         if len(self.word) - len(board_ltrs) == 7:
             total_score += 50
 
