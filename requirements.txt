@@ -21,7 +21,7 @@ MarkupSafe==1.1.1
 numpy==1.17.2
 pathspec==0.5.5
 python-dateutil==2.7.3
-PyYAML==3.13
+PyYAML==5.4
 requests==2.18.4
 semantic-version==2.5.0
 termcolor==1.1.0
